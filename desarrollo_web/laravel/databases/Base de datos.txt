@@ -1,0 +1,170 @@
+a. Archivo de configuración ubicado en config/database.php
+
+b. Si se desea en cada configuración establecer en qu ehost se puede hacer los Insert/update o select
+    'read' => [
+        'host' => '192.168.1.1',
+    ],
+    'write' => [
+        'host' => '196.168.1.2'
+    ],
+
+c. Para usar Db se necesita
+    use Illuminate\Support\Facades\DB;
+
+d. Para trabajar sin el ORM
+    $users = DB::connection('type_connection')->select(...);
+
+e. para obtener el objeto pdo y ejecutar los demás metodos sin usar DB::connection a cada rato
+    $pdo = DB::connection()->getPdo();
+
+f. Ejecutar un raw sql en la conexion por defecto
+    DB::select('select * from users where active = ?', [1]);//en el orden del arreglo serán reemplazados en los ?
+    DB::select('select * from users where id = :id', ['id' => 1]); //podemos indicar quien sustituirá a quien por el nombre del atributo
+    DB::insert('insert into users (id, name) values (?, ?)', [1, 'Dayle']);
+    $deleted = DB::delete('delete from users');
+    DB::statement('drop table users'); //sql que no retornan nada
+
+g. Transacciones
+    DB::transaction(function () {
+        DB::table('users')->update(['votes' => 1]);
+        DB::table('posts')->delete();
+    });
+
+    DB::transaction(function () {
+        DB::table('users')->update(['votes' => 1]);
+        DB::table('posts')->delete();
+    }, 5); //número de intentos 5
+
+h. Transacciones manuales
+    DB::beginTransaction(); //comenzar la transacción despues procedemos poner las sql que queremos
+    DB::rollBack(); //reversar los ejecutado en la transacción
+    DB::commit(); // ejecutar la transaccción
+NOTA: en la linea siguiente hacer los querys que se quiera
+
+i. para obtener datos con query builder
+    $users = DB::table('users')->get();
+
+    $user = DB::table('users')->where('name', 'John');
+    $user = DB::table('users')->where('name', 'John')->first();//sólo el primer registro en forma de objeto para ser usado $user->name
+    $email = DB::table('users')->where('name', 'John')->value('email');//sólo la columna email, se comporta como first pero accedemos al valor sin usar un for ni nada
+    $users = DB::table('users')->where('votes', '=', 100)->get();
+    $users = DB::table('users')->where('votes', 100)->get();//es igual a la de arriba
+    $users = DB::table('users')->where('votes', '>=', 100)->get();
+    $users = DB::table('users')->where('votes', '<>', 100)->get();
+    $users = DB::table('users')->where('name', 'like', 'T%')->get();
+    $users = DB::table('users')->where([ 
+        ['status', '=', '1'],
+        ['subscribed', '<>', '1'],
+    ])->get(); //a punta de arreglos armamos las condiciones
+    $users = DB::table('users')->where('votes', '>', 100)->orWhere('name', 'John')->get();
+    $users = DB::table('users')->whereBetween('votes', [1, 100])->get(); //un between normal
+    $users = DB::table('users')->whereNotBetween('votes', [1, 100])->get();//todo lo que no este en el rango es devuelto
+    $users = DB::table('users')->whereIn('id', [1, 2, 3])->get(); //where id in(1,2,3)
+    $users = DB::table('users')->whereNotIn('id', [1, 2, 3])->get(); //where id not in (1,2,3)
+    $users = DB::table('users')->whereNull('updated_at')->get();//where updated_at IS NULL
+    $users = DB::table('users')->whereNotNull('updated_at')->get(); where updated_at IS NOT NULL
+    $users = DB::table('users')->whereDate('created_at', '2016-12-31')->get(); //UN WHERE que usa fechas
+    $users = DB::table('users')->whereMonth('created_at', '12')->get(); //sólo por mes
+    $users = DB::table('users')->whereDay('created_at', '31')->get(); //por día
+    $users = DB::table('users')->whereYear('created_at', '2016')->get(); //por año
+    $users = DB::table('users')->whereColumn('first_name', 'last_name')->get();//where first_name=last_name
+    $users = DB::table('users')->whereColumn('updated_at', '>', 'created_at')->get();
+    $users = DB::table('users')->whereColumn([ ['first_name', '=', 'last_name'],['updated_at', '>', 'created_at'] ])->get(); //multiples where comparando columnas
+    DB::table('users')->where('name', '=', 'John')->orWhere(function ($query) {
+        $query->where('votes', '>', 100)
+              ->where('title', '<>', 'Admin');
+    })->get(); //el orwhere function seria un equivalente a hace or (votes>100 and title!='admin')
+
+    DB::table('users')
+        ->whereExists(function ($query) {
+            $query->select(DB::raw(1))
+                  ->from('orders')
+                  ->whereRaw('orders.user_id = users.id');
+        })->get(); //es equivalente a exist (select 1 from orders where  orders.user_id = users.id)
+
+    $users = DB::table('users')->count(); //cantidd de registros
+    $price = DB::table('orders')->max('price');//busca el maximo valor de la columna price
+    $price = DB::table('orders')->min('price');//busca el mínimo valor de la columna price
+    $price = DB::table('orders')->sum('price');//suma la columna price y devuelve la suma
+    $price = DB::table('orders')->where('finalized', 1)->avg('price'); //calculo promedio de la columna price y sólo considera los registros donde finalized valga 1
+    $users = DB::table('users')->where('options->language', 'en')->get();//si la columna options posee un JSON....    
+
+    $users = DB::table('users')->select('name', 'email as user_email')->get(); //todo los registros pero sólo la scolumnas name y email que tendrá el alias user_email
+    $users = DB::table('users')->distinct()->get(); //registro no repetidos
+    $users = DB::table('users')->orderBy('name', 'desc')->get();
+    $user = DB::table('users')->latest()->first();//si no se indica la columna, se busca created_at y se ordena descendentemente
+    $user = DB::table('users')->oldest()->first();//si no se indica la columna, se busca created_at y se ordena ascendentemente
+    $user = DB::table('users')->oldest('bithdate')->first();//se ordena por birthdate de forma ascendentemente
+    $user = DB::table('users')->latest('bithdate')->first();//se ordena por birthdate de forma descendentemente
+    $randomUser = DB::table('users')->inRandomOrder()->first();//desordena los regsitros al azar
+    $users = DB::table('users')->groupBy('account_id')->having('account_id', '>', 100)->get(); //gropupby y having van juntos, having se usa cuando where no se puede, como en el caso del group by
+    $users = DB::table('orders')->select('department', DB::raw('SUM(price) as total_sales'))->groupBy('department')->havingRaw('SUM(price) > 2500')->get();
+    $users = DB::table('users')->skip(10)->take(5)->get();
+    $users = DB::table('users')->offset(10)->limit(5)->get(); //este e sigual al de arriba, peor e smejor usar este, tiene notaciones de SQL, no se ponen a inventar nombres raros
+
+    $users = DB::table('users')->when($role, function ($query) use ($role) {
+        return $query->where('role_id', $role);
+    })->get(); //si el where dentro del funcion es verdadero (role_id es igual al role indicado retorna el registro), es similar a un where normal, pero puede usarse para cosas complejas
+
+    $users = DB::table('users')->when($sortBy, function ($query) use ($sortBy) {
+        return $query->orderBy($sortBy);
+    }, function ($query) {
+        return $query->orderBy('name');
+    })->get(); // dos when uno secuencial al otro pero el segundo pesquiza los datos del primero, así que si el primero no retorna nada el segundo no se ejecuta
+
+    $query = DB::table('users')->select('name');
+    $users = $query->addSelect('age')->get();//con esto agregamos a la consulta de arriba la columna age
+    $users = DB::table('users')
+        ->select(DB::raw('count(*) as user_count, status'))
+        ->where('status', '<>', 1)
+         ->groupBy('status')
+         ->get(); //cuidado con raw es inyectar SQL en bruto, hay que saber lo que se está haciendo y que atributos se pasan
+         
+    DB::table('users')->insert( ['email' => 'john@example.com', 'votes' => 0] );//inserción simple
+    DB::table('users')->insert([ ['email' => 'taylor@example.com', 'votes' => 0],['email' => 'dayle@example.com', 'votes' => 0] ]);//varios
+    $id = DB::table('users')->insertGetId( ['email' => 'john@example.com', 'votes' => 0] ); //inserta y devuelve id
+
+    DB::table('users')->where('id', 1)->update(['votes' => 1]);//simple, probar cuando toque el where con arreglo y arreglo multidimensional en el where
+    DB::table('users')->where('id', 1)->update(['options->enabled' => true]); //actualizar un json
+
+    DB::table('users')->increment('votes');//incremento votes+1
+    DB::table('users')->increment('votes', 5);//incremento votes+5
+    DB::table('users')->decrement('votes');//decremento votes-1
+    DB::table('users')->decrement('votes', 5);//decremento votes-5
+    DB::table('users')->increment('votes', 1, ['name' => 'John']); //el incremento con condicional
+    DB::table('users')->decrement('votes', 1, ['name' => 'John']); //el decremento con condicional
+
+    DB::table('users')->delete(); //borra todo
+    DB::table('users')->where('votes', '>', 100)->delete(); //borra donde votes sea mayor a 100
+    DB::table('users')->truncate(); //trunca, es decir, borra y resetea el auto increment
+
+    DB::table('users')->where('votes', '>', 100)->sharedLock()->get(); //bloqueamos el registro hasta que se termine de consultar
+    DB::table('users')->where('votes', '>', 100)->lockForUpdate()->get();//similar al de arriba pero si hay varios sharedLock e intentar acceder al mismo registro, no pueden ejecutarse hasta que lockForUpdate termine
+
+j. Joins
+    $users = DB::table('users')
+        ->leftJoin('posts', 'users.id', '=', 'posts.user_id')
+        ->get();
+    $users = DB::table('sizes')->crossJoin('colours')->get(); //pega las dos tablas sizes y colours en una sola
+
+    DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')->orOn(...); //se puede poner más opciones
+        })
+        ->get();
+
+    DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')
+                ->where('contacts.user_id', '>', 5);
+                ->orWhere('contacts.user_id', '>', 4);
+        })
+        ->get();
+
+k. Unions
+    $first = DB::table('users')->whereNull('first_name');
+    $users = DB::table('users')->whereNull('last_name')->union($first)->get();
+    
+    
+
+   

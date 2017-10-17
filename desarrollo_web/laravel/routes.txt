@@ -1,0 +1,121 @@
+* En app/http/routes.php están las rutas del framework.
+    Consideraciones:
+
+    a. Para usar el autenticador de laravel en algunas rutas	
+        Route::group(['middleware' => ['auth_sentinel', 'admin_sentinel'],
+            Route::get('/', 'AdministrarController@getIndex');
+        });
+
+    NOTA: todos los routes fuera de este group, no necesitarán autenticación
+
+    b. Para usar vistas directamente sin usar controladores
+        Route::get('/', function () {
+            return view('welcome');
+        });
+
+        Route::get('/', function () {
+            return view('greeting', ['name' => 'James']);//en la vista {{$name}}
+        });
+
+        Route::get('/', function () {
+            return view('greeting')->with('name', 'Victoria');//en la vista {{$name}}
+        });
+
+
+    c. Para incluir routes dentro de otro para segmentar en archivo en varios menores:
+    require __DIR__.'/actors_routes.php';
+    NOTA: __DIR__ es la ubicación actual, es decir el route por defecto, actors_route esta al lado de routes.php, se puden usar subcarpetas
+
+    d. Para usar prefijos o mejor indicar un patrón por el cual comiencen ciertas rutas usar:
+        Route::group(['prefix' => 'permissions'], function () {
+            Route::get('/progress', 'PermissionsController@getAllPermissions');
+            Route::get('/access', 'PermissionsController@getAllPermissions');
+        });
+    NOTA: en el ejemplo hay dos rutas: permissions/progress y permissions/progress, prefix se usa para no declarar permissions en cada ruta.
+    Adicionalmente, si se usarán variables en las rutas tambien pueden ser indicadas en el prefijo como un route
+
+    e. Para invocar controladores:
+        Route::get('/ruta', 'classController@method');
+
+    f. Rutas por metodo de envío del formulario:
+            Route::get('/ruta', 'classController@method');    
+            Route::post('/progress', 'classController@method');
+            Route::put('/progress/{statement}', 'classController@method');
+            Route::delete('/progress/{statement}', 'classController@method');
+            Route::patch($uri, $callback);
+            Route::options($uri, $callback);
+            f.1. Para agrupar dos métodos de envío
+                Route::match(['get', 'post'], '/', function () {}); //el método function puede ser un controlador perfectamente
+                Route::any('foo', function () {}); //este se usa cuando la ruta foo y su controlador o función pueda usarse con TODOS los métodos
+                de envío
+
+    g. Para indicar una carpeta común entre archivos usar 
+            Route::group(['namespace' => 'social'], function() {
+                Route::get('/{provider?}', 'classController@method1');
+                Route::get('/callback/{provider?}', 'classController@method2');
+            });
+    NOTA. el archivo classController está dentro de la carpeta social, así evitamos escribir social\classController@method tantas veces como route haya
+
+    h. Para usar variables en las rutas
+        Route::get('{module}', 'PermissionsController@getPermissionsModule');
+    NOTA: {module} puede contener cualquier valor, ver más abajo como filtrar o validar los tipos de datos
+
+    i. Para validar las variables de las rutas con patrones:
+        Route::pattern('user', '[0-9]+|[0-9a-z@.]+'); //| es un or se puede concatenar variables condiciones, en este caso se admiten números 
+        del 0 al 9 OR números del 0 al 9, letras de la a 'a' la 'z', @ y .
+        Route::pattern('module', '[a-z0-9-]{5,25}+'); //el + significa que la longitud es variable
+        Route::pattern('verb', '[a-z0-9-]{1,25}+');//mínimo un digito y maximo 25
+        Route::pattern('status', '[a-z]{9,11}+');//sólo admite "initialized", "completed", nótese la longitud de ambas palabras
+        Route::pattern('statement', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'); 
+        //admite por ejemplo 1111111a-1d34-1d34-1d34-256478547856, en este caso no hay un + por lo cual debe haber asjuro la longitud indicada
+    NOTA: los pattern deben ser declarados ANTES de todos los routes, ya qu ela svariables se pueden repetir más de una vez y se necesita alertar al 
+    route para que valida estas variables según las normas establecidas con pattern. Otra opción es usar:
+        Route::get('user/{name}', function ($name) {
+            //
+        })->where('name', '[A-Za-z]+');
+    Pero este método obliga a repetir el patrón si la variable existe más de una vez en los routes
+
+    j. Para usar Middleware
+        Route::group(['namespace' => 'xAPI','middleware' => ['filter_xAPI']], function () {//los controladores deben estar dentro de una subcarpeta llamada xAPI
+            Route::get('/details', 'ActorsController@getCurrentActorDetails');//del actor logeado
+        });//metodo por medio de group RECOMENDADO)
+
+        Route::get('admin/profile', function () {})->middleware('auth'); //llamado simple
+
+        Route::get('/', function () {})->middleware('first', 'second'); //varios middleware a la vez
+
+        Route::get('admin/profile', function () {})->middleware(classMiddleware::class); //por el nombre de la clase
+
+    NOTA: middleware se ejecuta siempre cuando se vaya a usar la ruta details y antes de ésta, muy conveniente para ejecutar código común entre 
+    varias rutas, como por ejemplo en web services. Todo los Middleware debe ser declarados en el kernel, ver sección de middleware
+
+    k. Para usar una función rápida en vez de usar  controladores y a su vez, poder manipular la variable que viene en la ruta:
+        Route::get('user/{id}', function ($id) {
+            return 'User '.$id;
+        });
+    NOTA: Tantas variables vengan en la ruta, serán las variables que pasarán a la función o al controlador en el orden definido en la
+    ruta, los nombres de las variables pasadas a la función pueden ser cualquieras, pero el orden dictaminará quien representa determinada variable de la
+    ruta.
+
+    l.variables opcionales:
+        Route::get('user/{name?}', function ($name = null) {
+            return $name;
+        });
+    NOTA: el ? indica que la viable puede estar o no, se puede inicializar la viable en la función o controlador en null como en el ejemplo
+
+    m.Darle un alias o nombre a la ruta para no estar usando la ruta explícitamente:
+        Route::get('user/profile', function () {
+            //
+        })->name('profile');
+    NOTA: Para usar esta ruta:
+        $url = route('profile');
+        // Generating Redirects...
+        return redirect()->route('profile');
+
+    n.Para obtener la ruta y su información desde cualquier punto del código
+        $route = Route::current();
+        $name = Route::currentRouteName();
+        $action = Route::currentRouteAction();
+    NOTA: si no está registrado route como un facade en config/app usar use o la ruta de forma explícita: 
+        Illuminate\Routing\Router
+        \Illuminate\Routing\Router

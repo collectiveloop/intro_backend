@@ -1,0 +1,63 @@
+a. para consultar y generar el paginador
+    $users = DB::table('users')->paginate(15);
+    $users = DB::table('users')->simplePaginate(15); //sólo siguiente y atrás, hay métodos cómo total() y lastPage() que no se encontrarán disponibles
+    $users = App\Models\Users::paginate(15); //eloquent
+    $users = User::where('votes', '>', 100)->paginate(15); //condición
+    $users = User::where('votes', '>', 100)->simplePaginate(15);//condición
+
+b. En la vista para mostrar los resultados
+    <div class="container">
+        @foreach ($users as $user)
+            {{ $user->name }}
+        @endforeach
+    </div>
+
+    {{ $users->links() }}
+    {{ $users->appends(['sort' => 'votes'])->links() }} //pone en las url un segmento para ordenar por votes
+    {{ $users->fragment('foo')->links() }} //pone #foo en la url para que el navegador muestre la sección con ese ancla, recordar que el anchor es un id en el html
+
+c. Para customizar y setear la url relativa de la paginación
+    $users->setPath('custom/url'); //una vez consultado, al objeto al que se le asigna la consulta dispone del método
+
+d. Si queremos que la consulta pagina la retornemos como un json en un web services
+    Route::get('users', function () {
+        return App\Models\Users::paginate();
+    });
+
+    //retorno
+    {
+        "total": 50,
+        "per_page": 15,
+        "current_page": 1,
+        "last_page": 4,
+        "next_page_url": "http://laravel.app?page=2",
+        "prev_page_url": null,
+        "from": 1,
+        "to": 15,
+        "data":[
+            {
+                // Result Object
+            },
+            {
+                // Result Object
+            }
+        ]
+    }
+NOTA App\Models\Users debe implementar Illuminate\Contracts\Support\Jsonable, a su vez el propio eloquent lo implementa y a la salida de paginator le aplica toJson
+
+e. Es posible crear una plantilla con el prototipo de los enlaces, en caso de que se desee crear los enlaces siguiente, atrás y los números de forma creativa
+{{ $paginator->links('view.name') }}
+NOTA: si no se conoce la estructura del paginador y quieres crear una plantilla, podemos conocer como es la plantilla por defecto con php artisan vendor:publish --tag=laravel-pagination, esto pone en resources/views/vendor/pagination un modelo de vista con el formato, de allí se copia, pega y procedemos a modificar la plantilla
+
+f. Otros métodos disponibles
+    $users->count()
+    $users->currentPage()
+    $users->firstItem()
+    $users->hasMorePages()
+    $users->lastItem()
+    $users->lastPage() (No sirve con simplePaginate)
+    $users->nextPageUrl()
+    $users->perPage()
+    $users->previousPageUrl()
+    $users->total() (No sirve con simplePaginate)
+    $users->url($page)

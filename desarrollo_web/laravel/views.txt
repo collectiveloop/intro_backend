@@ -1,0 +1,23 @@
+a. Están ubicados en 
+    resources/views
+
+b. para acceder a las variables pasadas desde el controlador o el route
+    {{ $name }} o <?php echo $name; ?>
+
+c. Para verificar si existe una vista en el sistema
+    use Illuminate\Support\Facades\View;
+
+    if (View::exists('emails.customer')) {
+        //
+    }
+NOTA: Se usa en controladores, middleware, etc.
+
+d. Si queremos que una variable sea usada por todas las vistas llamadas en el request
+    View::share('key', 'value');
+NOTA: Puede ser una vista de errores, con un formulario, pero los tres usan la viable para algo
+
+e. Lo más importante, en views defines los content de las secciones, la estructura (donde está head, body, los css y javascript) la encontramos 
+en el layout en views (por defecto layouts/app)
+
+f. Es posible tener muchos layouts, en cada sección la instrucción @extends('layouts.app') siempre está al principio de la sección e indica a cual
+layout pertenece o dentro de que layout debe ser pintado. la sección o todo tu html de la sección debe estar siempre entre @section('content') y @endsection

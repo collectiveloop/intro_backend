@@ -1,0 +1,344 @@
+a. Comando para crear un modelo
+    php artisan make:model User
+
+    php artisan make:model User --migration //+ migration
+    php artisan make:model User -m //+ migration
+b. Estructura de un modelo
+    <?php
+    namespace App;
+    use Illuminate\Database\Eloquent\Model;
+
+    class Flight extends Model
+    {
+        /**
+         * The table associated with the model.
+         *
+         * @var string
+         */
+        protected $table = 'my_flights';
+        /**
+         * Primary key of the table
+         *
+         * @var string
+         */
+        protected $primaryKey = 'primary_key'; //opcional
+        /**
+         * Set if Primary key is incremting or not
+         *
+         * @var bool
+         */
+        public $incrementing  = false/true; //opcional
+        /**
+        * Indicates if the model should be timestamped.
+        *
+        * @var bool
+        *
+        */
+        public $timestamps = false/true; //opcional, para que eloquent no intente operar sobre created_at y updated_at
+        /**
+        * The storage format of the model's date columns.
+        *
+        * @var string
+        */
+        protected $dateFormat = 'U'; //opcional
+        const CREATED_AT = 'creation_date';//opcional, así definimos el nuevo nombre de create_at
+        const UPDATED_AT = 'last_update'; //opcional, así definimos el nuevo nombre de updated_at
+        /**
+        * The connection name for the model.
+        *
+        * @var string
+        */
+        protected $connection = 'connection-name'; //opcional, si no se desea la conexión por defecto se indica acá
+        /**
+        * The attributes that should be hidden for arrays. para serialización
+        *
+        * @var array
+        */
+        protected $hidden = ['password'];
+        /**
+        * The attributes that should be visible in arrays.  para serialización
+        *
+        * @var array
+        */
+       protected $visible = ['first_name', 'last_name'];
+    }
+
+c. Cómo usar el modelo (fuera del modelo)
+    use App\Flight;
+    $flights = App\Flight::all();
+    foreach ($flights as $flight) {
+        echo $flight->name;
+    }
+
+    $flights = App\Flight::where('active', 1)->orderBy('name', 'desc')->take(10)->get();
+
+    foreach (Flight::where('foo', 'bar')->cursor() as $flight) {
+        //
+    }//un cursor que permita el filtrado de resultados, hace más eficiente el foreach al recorrer menos registros
+
+    $flights = $flights->reject(function ($flight) {
+        return $flight->cancelled;
+    });//si la conexión fue rechazada por alguna razón definimos que debe retornar (¿¿?? no muy util)
+
+    // Retrieve a model by its primary key...
+    $flight = App\Flight::find(1); //primary key con valor 1, es decir el primer registro
+
+    // Retrieve the first model matching the query constraints...
+    $flight = App\Flight::where('active', 1)->first(); //devuelve un arreglo
+    $flights = App\Flight::find([1, 2, 3]); //devuelve los registros con id 1, 2 y 3
+
+    $model = App\Flight::findOrFail(1); //devuelve una excepción si no se encuentra Illuminate\Database\Eloquent\ModelNotFoundException
+    $model = App\Flight::where('legs', '>', 100)->firstOrFail(); //devuelve una excepción si no se encuentra Illuminate\Database\Eloquent\ModelNotFoundException
+
+    $count = App\Flight::where('active', 1)->count();
+    $max = App\Flight::where('active', 1)->max('price');
+
+    //para guardar, generalmente en un controlador
+    $flight = new Flight;
+    $flight->name = $request->name;
+    $flight->save();
+
+    //para actualizar
+    $flight = App\Flight::find(1);
+    $flight->name = 'New Flight Name';
+    $flight->save();
+
+    App\Flight::where('active', 1)
+    ->where('destination', 'San Diego')
+    ->update(['delayed' => 1]); //delayed es actualizado para múltiples registros
+
+    // Retrieve the flight by the attributes, or create it if it doesn't exist...
+    $flight = App\Flight::firstOrCreate(['name' => 'Flight 10']); //si no existe lo insertar de una
+
+    // Retrieve the flight by the attributes, or instantiate a new instance...
+    $flight = App\Flight::firstOrNew(['name' => 'Flight 10']); //no guarda automaticamente, necesita save
+
+    $flight = App\Flight::updateOrCreate(
+        ['departure' => 'Oakland', 'destination' => 'San Diego'], //esto e sel where
+        ['price' => 99] //las columnas que se insertarán o actualizarán
+    ); //no necesita save, este actualiza si existe, de lo contrario lo inserta como nuevo
+
+    $flight = App\Flight::find(1); //se consulta...
+    $flight->delete();             //luego se borra...
+    //borrar por el primary key
+    App\Flight::destroy(1);
+    App\Flight::destroy([1, 2, 3]);
+    App\Flight::destroy(1, 2, 3);
+    $deletedRows = App\Flight::where('active', 0)->delete(); //no sólo se puede borrar un registro con delete sino también múltiples
+
+
+d. Cómo hacer inserciones masivas
+    ++ Definir el siguiente atributo, indicando cuales columnas serán asignadas masivamente (evitamos actualizaciones indebidas sobre otras columnas)
+        /**
+         * The attributes that are mass assignable.
+         *
+         * @var array
+         */
+        protected $fillable = ['name'];
+
+    ++ En cualquier lugar que use el modelo
+        $flight = App\Flight::create(['name' => 'Flight 10']);//sólo name es permitido
+
+    ++ Para definir que tablas no se pueden asignar
+        /**
+        * The attributes that aren't mass assignable.
+        *
+        * @var array
+        */
+       protected $guarded = ['price']; //si tiene por lo menos una columna, se crea la limitación
+       protected $guarded = []; //todas las columnas serán asignables sin limitaciones, como debería estar por defecto
+
+e. Borrado 'suave'
+    use Illuminate\Database\Eloquent\SoftDeletes;
+    //donde van los atributos se pone
+    use SoftDeletes;
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array
+     */
+    protected $dates = ['deleted_at']; //debe existir esta columna en la tabla, ver en migration el método softDeletes
+
+    if ($flight->trashed()) {
+        //
+    }//si hay algo borrado suavemente esta condición lo indicará, no especifica cantidad ni nada sólo si hay por lo menos un registro borrado suavemente
+
+    $flights = App\Flight::withTrashed()->where('account_id', 1)->get(); //así consultamos los registros incluyendo los registros guardados suavemente
+    $flight->history()->withTrashed()->get(); //uso de relaciones
+    $flights = App\Flight::onlyTrashed()->where('airline_id', 1)->get(); //retorna sólo los registros borrados suavemente
+    $flight->restore();//deshace este registro borrado suavemente
+    App\Flight::withTrashed()->where('airline_id', 1)->restore(); //restaura los registros borrados suavemente existentes en la consulta
+    $flight->history()->restore(); //uso de relaciones
+
+    // Force deleting a single model instance...
+    $flight->forceDelete(); //el regsitro borrado suavemenet ahora es borrado permanentemente
+
+    // Force deleting all related models...
+    $flight->history()->forceDelete(); //usando relaciones podemos borrar varios registros borrados suavemente
+
+NOTA: En los ejemplos con el objeto $flight, antes hubo una consulta y fue guardado en este objeto, no confundir con  el modelo App\Flight
+
+f. Global Scopes
+    ++ Declaración independiente
+        <?php
+        namespace App\Scopes;
+        use Illuminate\Database\Eloquent\Scope;
+        use Illuminate\Database\Eloquent\Model;
+        use Illuminate\Database\Eloquent\Builder;
+
+        class AgeScope implements Scope
+        {
+            /**
+             * Apply the scope to a given Eloquent query builder.
+             *
+             * @param  \Illuminate\Database\Eloquent\Builder  $builder
+             * @param  \Illuminate\Database\Eloquent\Model  $model
+             * @return void
+             */
+            public function apply(Builder $builder, Model $model)
+            {
+                $builder->where('age', '>', 200); //puede haber n cosas aquí, varias condiciones etc.
+            }
+        }
+
+        En el modelo
+        <?php
+        namespace App;
+
+        use App\Scopes\AgeScope;
+        use Illuminate\Database\Eloquent\Model;
+
+        class User extends Model
+        {
+            /**
+             * The "booting" method of the model.
+             *
+             * @return void
+             */
+            protected static function boot()//Este método se sobreescribe
+            {
+                parent::boot();
+                //indicamos el scope a utilizar, ahora cuando se consulte el scope trabajará y filtrará los resultados según lo indicado en el scope
+                static::addGlobalScope(new AgeScope);
+            }
+        }
+
+    ++ Scope anónimo
+        <?php
+        namespace App;
+
+        use Illuminate\Database\Eloquent\Model;
+        use Illuminate\Database\Eloquent\Builder;
+
+        class User extends Model
+        {
+            /**
+             * The "booting" method of the model.
+             *
+             * @return void
+             */
+            protected static function boot()
+            {
+                parent::boot();
+                //no se necesita otra clase, el filtro directo en la función
+                static::addGlobalScope('age', function (Builder $builder) {
+                    $builder->where('age', '>', 200);
+                });
+            }
+        }
+
+    ++ Para eliminar el scope
+        User::withoutGlobalScope(AgeScope::class)->get(); //remueve el scope indicado
+        // Remove all of the global scopes...
+        User::withoutGlobalScopes()->get(); //remueve toso los scopes
+
+        // Remove some of the global scopes...
+        User::withoutGlobalScopes([
+            FirstScope::class, SecondScope::class
+        ])->get(); //en el arreglo ponemos separados por comas las definición de los scopes que queremos eliminar
+
+    ++ Scope dircto en el modelo
+    <?php
+    namespace App;
+    use Illuminate\Database\Eloquent\Model;
+
+    class User extends Model
+    {
+        /**
+         * Scope a query to only include popular users.
+         *
+         * @param \Illuminate\Database\Eloquent\Builder $query
+         * @return \Illuminate\Database\Eloquent\Builder
+         */
+        public function scopePopular($query)
+        {
+            return $query->where('votes', '>', 100);
+        }
+
+        /**
+         * Scope a query to only include active users.
+         *
+         * @param \Illuminate\Database\Eloquent\Builder $query
+         * @return \Illuminate\Database\Eloquent\Builder
+         */
+        public function scopeActive($query)
+        {
+            return $query->where('active', 1);
+        }
+
+        /**
+        * Scope a query to only include users of a given type.
+        *
+        * @param \Illuminate\Database\Eloquent\Builder $query
+        * @param mixed $type
+        * @return \Illuminate\Database\Eloquent\Builder
+        */
+        public function scopeOfType($query, $type)
+        {
+            return $query->where('type', $type);
+        }
+    }
+
+    $users = App\Models\Users::popular()->active()->orderBy('created_at')->get();
+    $users = App\Models\Users::ofType('admin')->get();
+    NOTA: es necesario poner de prefijo scope en el nombre del método, siempre se le pasa $query, opcional los otros argumentos a la derecha,
+    por último para usarlo no se pone el prefijo
+
+g. Serialización
+    $users = App\Models\Users::all();
+    return $users->toArray();//a arreglo
+
+    $user = App\Models\Users::find(1);
+    return $user->toJson();//a JSON
+
+    $user = App\Models\Users::find(1);
+    return (string) $user;//a json igualmente
+
+    Route::get('users', function () {
+        return App\Models\Users::all();
+    }); //a JSON igualmente
+
+    return $user->makeVisible('attribute')->toArray(); //mostramos el atributo en la serialización si está oculto (ver $hidden, es afectado)
+    return $user->makeHidden('attribute')->toArray(); //ocultamos el atributo en la serialización si está visible (ver $visible, es afectado)
+
+    ++ Para agregar un atributo qu eno esta en la tabla, pero se quiere en el objeto serialziado
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['is_admin'];
+    /**
+     * Get the administrator flag for the user.
+     *
+     * @return bool
+     */
+    public function getIsAdminAttribute()
+    {
+        return $this->attributes['admin'] == 'yes';
+    }
+    NOTA: nótese que el atributo se llama is_admin y el método es getIsAdminAttribute(), tiene isAdmin en el nombre
+
+g. Ver relaciones en el manual oficial
+
+h. Ver colecciones en el manual oficial

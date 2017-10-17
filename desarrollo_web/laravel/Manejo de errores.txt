@@ -1,0 +1,38 @@
+1. Hay que modificar la clase que gestiona los erroes en app/Exceptions/Hnandler.php
+2. En el método render es donde se debe hacer las modificaciones.
+3. por cada excepción evaluada, se le debe hacer hacer el respectivo use, o hacer la comparación en los condicionales con su namespace completo \....\classException
+4.Poner el siguiente código antes del return normal del método render
+    //en vez de 404 habría que investigar otro tipo de errores que se pueden lanzar 402,505, etc. quizás 404 no sea el más idóneo para TODOS
+    if ($e instanceof \Symfony\Component\Routing\Exception\MethodNotAllowedException) {//el método existe pero no está permitido el accesso por ejemplo es private el método y lo estamos llamando
+        return response()->view('errors.method_not_allowed_exception',['message'=>'not found'],404);
+    } elseif  ($e instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException) {//cuando  se llama a un método de un controlador desde una ruta (desde el cliente, el formulario, no desde el backend), pero este no existe, por ejemplo desde el formulario el action apunta a un post method pero en el controlador no existe este método definido,
+        return response()->view('errors.method_not_allowed_http_exception',['message'=>'not found'],404);
+    } elseif ($e instanceof \InvalidArgumentException) {//cuando hay algo malo en el route. puntualmente un controlador invocado que no existe
+        return response()->view('errors.invalid_argument_exception',['message'=>'not found']);
+    } elseif ($e instanceof HttpResponseException) {
+        return response()->view('errors.http_response_exception',['message'=>'not found']);
+    } elseif ($e instanceof ModelNotFoundException) {
+        return response()->view('errors.model_not_found_exception',['message'=>'not found'],404);
+    } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
+        return response()->view('errors.authentication_exception',['message'=>'not found']);
+    } elseif ($e instanceof AuthorizationException) {
+        return response()->view('errors.authorization_exception',['message'=>'not found']);
+    } elseif ($e instanceof ValidationException && $e->getResponse()) {
+        return response()->view('errors.validation_exception',['message'=>'not found'],404);
+    } elseif($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {//url no encontrada
+        // ajax 404 json feedback
+        if ($request->ajax())
+            return response()->json(['error' => 'Not Found'], 404);
+        // normal 404 view page feedback
+        return response()->view('errors.404',['message'=>'not found'],404);
+    }
+
+    return parent::render($request, $e);
+NOTA: Pueden añadirse más if de acuerdo a las excepciones que se quieran manejar, si no entra en ningún if ejecutará el return que tiene por defecto
+
+5 los archivos deben tener le nombre de la siguiente forma
+    resources/views/errors/invalid_argument_exception.blade.php
+
+6. Las vistas van en resources/views/errors/
+NOTA: Debe implementarse cada vista, siguen la misma lógica que invocar vistas desde controladores o routes, se le puede pasar variables
+

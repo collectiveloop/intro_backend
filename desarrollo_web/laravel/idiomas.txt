@@ -1,0 +1,56 @@
+a. Ubicación d elos archivos de idiomas 
+    resources/lang/en|es|../archivo.php
+NOTA: Por defecto esta los archivos para Autenticación, validación y paginación
+
+b. Contenido básico de cualquier archivo de idioma
+    return [
+        'welcome' => 'Welcome to our application'
+    ];
+
+c. Por defecto el idioma es indicado en config/app.php
+
+d. Para cambiar le idioma en tiempo real en cualuier punto el código
+    App::setLocale('es');
+NOTA: puede ser usado en el route, controllers, views, middleware, etc. 
+Es posible usar parte de la URL para especificar el idioma, o usar cookies o sesión
+
+e. Si algún atributo no existe en el idioma, se puede indicar al framework que busque ese mismo 
+atributo en otro archivo de diferente idioma, en config/app.php
+    fallback_locale=>'en'
+
+f. Para conocer el idoima que actualmente está configurado
+    $locale = App::getLocale();
+
+g. Para saber si un idioma es el local, por ejemplo ¿inglés es el idioma configurado?
+    if (App::isLocale('en')) {
+        //
+    }
+
+h. Para imprimir algún atributo (generalmente se hace esto en la vista o el controlador que devolverá el web service)
+    echo trans('messages.welcome');
+
+    {{ trans('messages.welcome') }} //para blade
+
+    @lang('messages.welcome') //para blade
+
+NOTA: La ubicación escrita es: archivo message) en la caprta language).atributo welcome
+
+i. Para trabajar con atributos especiales que son reemplazados por valores dinámicos del archivo de idiomas
+    'welcome' => 'Welcome, :name', //en el archivo de idiomas, el atributo sería name
+
+    echo trans('messages.welcome', ['name' => 'dayle']); //se le pasa como segundo parámetro en un arreglo el o los atributos a reemplazar
+
+j. Si queremos que el atributo sea reemplazar en mayuscula o minúscula
+    'welcome' => 'Welcome, :NAME', // Welcome, DAYLE
+
+    'goodbye' => 'Goodbye, :Name', // Goodbye, Dayle
+
+k. Para manejar singular o plural
+    'apples' => 'There is one apple|There are many apples', //la segunda por cion despues de | es el plural
+
+    echo trans_choice('messages.apples', 10); //si el segundo parámetro es mayor a 1 se asume el plural, trans_choice devolvería la versión plural
+
+l. Versión más compleja del plural
+    'apples' => '{0} There are none|[1,19] There are some|[20,Inf] There are many',
+NOTA: Usamor trans_choice igualmente pero ahora habrá más opciones de acuerdo a la cantidad, inf signifira infinito 
+

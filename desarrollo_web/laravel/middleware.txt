@@ -1,0 +1,53 @@
+Consideraciones:
+    a. Para crear un middleware php artisan make:middleware MiddlewareName o copiar u pegar uno ya existente.
+
+    b. Los middleware están alojados en: app/Http/Middleware.
+
+    c. Todos los Provider y demás facades se pueden acceder por medio de los middleware se manera similar a como si estuviéramos programando un 
+    controlador.
+
+    d. El middleware debe ser registrado en App\Http\Kernel.php, hay tres formas: 
+
+        ++ De forma global para que se ejecute en cada request (NO ES USUAL) 
+
+        ++ Dentro de groups, un grupo de middleware se ejecutan cuando se indica el nombre del grupo en el route
+
+        ++ Asignado individualmente en el route (lo mejor y el uso más habitual)
+    NOTA: Los dos últimos, para poder ser usados se debe usar la forma de llamar middleware's en routes (ver sección de routes)
+
+    e. Estructura básica d eun Middleware
+        <?php
+        namespace Illuminate\Session\Middleware;
+        use Closure;
+        class StartSession
+        {
+            public function handle($request, Closure $next) //metodo que se invoca primero
+            {
+                //antes de ejecutar el controlador esta parte del código se ejecuta
+                /*
+                código antes del controlador
+                */
+                $response= $next($request); //next es para invocar al controlador
+                //despues de ejecutar el controlador , esta parte del código se ejecuta
+                /*
+                código después del controlador
+                */
+                return $response;
+            }
+
+            public function terminate($request, $response) //cuando ya fue enviada la información al browser, esta función es invocada
+            {
+                // Store the session data...
+            }
+        }
+
+    f. En handle, si queremo spasarle al middleware otro parámetro además de los dos por defecto, se debe indicar dichas variables despues de $next y pasarlo desde el route:
+        public function handle($request, Closure $next, $third_parameter)
+        {
+            return $next($request);
+        }
+
+    Y en el route 
+        Route::put('post/{id}', function ($id) {
+            //
+        })->middleware('content of the third variable');

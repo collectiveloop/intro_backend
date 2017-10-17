@@ -1,0 +1,117 @@
+a. El archivo de configuración está en config/mail.php
+
+b. es necesario instalar
+    composer require guzzlehttp/guzzle
+c. Se debe crear una clase mail por cada tipo de correo a enviar, en esas clases se hace el from to, etc del correo, algunos cosas serán definidas 
+en config/mail.php
+   php artisan make:mail NewClassEmail
+NOTA: la nueva case cuando se use this, sus métodos  pueden ser usado po rle método chaining
+
+d. Método que debe implementarse en la nueva clase para construir el correo
+    /**
+     * Build the message.
+     *
+     * @return $this
+     */
+    public function build()
+    {
+        return $this->from('example@example.com')
+                    ->view('emails.orders.shipped');
+    }
+NOTA. Form está definido en la configuración(c) pero puede ser sobreescrito, 
+
+e.Para pasar variables a la vista
+    <?php
+
+    namespace App\Mail;
+
+    use App\Order;
+    use Illuminate\Bus\Queueable;
+    use Illuminate\Mail\Mailable;
+    use Illuminate\Queue\SerializesModels;
+
+    class NewClassEmail extends Mailable
+    {
+        use Queueable, SerializesModels;
+
+        /**
+         * The NewClassEmail instance.
+         *
+         * @var Order
+         */
+        public $order; //debe ser declarada public para poder usarla en el view
+
+        /**
+         * Create a new message instance.
+         *
+         * @return void
+         */
+        public function __construct(Order $order)
+        {
+            $this->order = $order;
+        }
+
+        /**
+         * Build the message.
+         *
+         * @return $this
+         */
+        public function build()
+        {
+            return $this->view('emails.orders.shipped') 
+                ->with([
+                    'orderName' => 'name',
+                    'orderDate' => 'date,
+                ]);//este es otro método usando with
+        }
+    }
+En el View
+    <div>
+        Name: {{ $orderName }}
+        Price: {{ $order->price }}
+        Date: {{ $orderDate }}
+    </div>
+
+f. Se puede definir un método alternativo en forma de texto para ciertas aplicaciones que aún no leen html en los correos (viejas aplicaciones)
+  return $this->view('emails.orders.shipped')
+        ->text('emails.orders.shipped_plain');
+
+g. attachear archivos
+    $this->view('emails.orders.shipped')
+    ->attach('/path/to/file');
+
+    return $this->view('emails.orders.shipped')
+    ->attach('/path/to/file', [
+        'as' => 'name.pdf',
+        'mime' => 'application/pdf',
+    ]);
+
+    return $this->view('emails.orders.shipped')
+    ->attachData($this->pdf, 'name.pdf', [
+        'mime' => 'application/pdf',
+    ]); //este agarra el contenido en $this->pdf y lo poner en el buffer de salida, importante la etiqueta mime
+
+h. Si se quiere usar un archivo dentro de un view o la plantilla
+    <img src="{{ $message->embed($pathToFile) }}">
+
+    <img src="{{ $message->embedData($data, $name) }}"> //se le vierte el contenido en tiempo real al buffer
+NOTA: $message es propio del mail, está disponible siempre
+
+i. Para enviar desde un controlador o un middleware o un Listener
+    Mail::to($request->user())->send(new NewClassEmail($order)); // debe pasar una instancia de NewClassEmail que extiende de Mailable
+
+    Mail::to($request->user())
+        ->cc($moreUsers)
+        ->bcc($evenMoreUsers)
+        ->send(new NewClassEmail($order));
+
+    Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->queue(new OrderShipped($order)); //envío en segundo plano, ver sección de queue
+
+j. Si queremos que la clase Mailable (NewClassMail) siempre sea envíado en segundo plano , la clase de implementar  ShouldQueue
+    implements ShouldQueue
+Ahora al usar el método send automáticamente se ejecutará en forma de queue en vez de send
+
+k. Existen las notifications (investigar más adelante si uso)

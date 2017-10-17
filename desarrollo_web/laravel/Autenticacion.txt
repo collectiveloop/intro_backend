@@ -1,0 +1,77 @@
+a. La configuración básica se encuentra en config/auth.php
+b. La columna password en caso de que la sesión sea vía database, debería ser de 255 caracteres, 
+siendo el mínimo requerido 60.
+c. La columna users en la base de datos en caso de sesión tipo database, debe ser de al menos 100 
+caracteres.
+d. Para crear la lógica para autenticar usar 
+    php artisan make:auth
+e. Si queremos que el usuario no necesariamente sea el password, debemos poner este método en AuthController
+    public function username()
+    {
+        return 'username';
+    }
+NOTA: Quizás sea un username normal, debemos velar porque esa función devuelva la información, value o contenido del username
+f. El método validator de AuthController tiene todas las opciones de validar necesarias
+g. El método cerate de AuthController tiene la lógica para guardar información del nuevo usuario (un mamarracho insert)
+h. Hay vistas donde está el contenido de la sección (register,login y los reset), pero la estructura general, los css, javascript están en el layout auth/app.blade.php
+i. Para acceder a la información de la sesión
+    use Illuminate\Support\Facades\Auth; //el facade que gestiona la sesión
+
+    // Get the currently authenticated user...
+    $user = Auth::user();
+
+    // Get the currently authenticated user's ID...
+    $id = Auth::id();
+
+    //To close the current session
+    Auth::logout();
+
+j. Cuando el usuario ya está autenticado, para acceder a todos sus datos, insertar nuevas variables a la sesión, etc., lo hacemos por medio del 
+request
+    use Illuminate\Http\Request;
+NOTA: Ver session para saber como manipular las variables de sesión con laravel por medio del request, tambien es válido usar los otros métodos
+que dispone laravel como la clase estática Session por ejemplo
+
+k. para saber si hay sesión iniciado o no
+    use Illuminate\Support\Facades\Auth;
+
+    if (Auth::check()) {
+        // The user is logged in...
+    }
+
+l. Para indicar en los routes que ciertas secciones sólo pueden ser accedidas si hay sesión abierta
+    Route::get('profile', function () {
+        // Only authenticated users may enter...
+    })->middleware('auth');
+
+ll. Por medio del controlador se puede acceder al middleware user  $this->middleware('auth');. 
+NOTA: Este hace el trabajo de redireccionar si no hay sesión, usarlo en el __construct()
+
+m.Para una autenticacioón custom
+    <?php
+    namespace App\Http\Controllers;
+    use Illuminate\Support\Facades\Auth;
+    class LoginController extends Controller
+    {
+        /**
+         * Handle an authentication attempt.
+         *
+         * @return Response
+         */
+        public function authenticate()
+        {
+            if (Auth::attempt(['email' => $email, 'password' => $password])) {
+                // Authentication passed...
+                return redirect()->intended('dashboard');
+            }
+        }
+    }
+n. Se puede agegar a attemp unas columnas extras 
+    if (Auth::attempt(['email' => $email, 'password' => $password, 'active' => 1])) {
+        // The user is active, not suspended, and exists.
+    }
+o. Autenticación manual sin usar attempt
+    Auth::login($user);
+
+    // Login and "remember" the given user...
+    Auth::login($user, true);

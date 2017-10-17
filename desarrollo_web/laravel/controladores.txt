@@ -1,0 +1,160 @@
+Consideraciones:
+    a.Ubicados en la carpeta app/Http/Controllers.
+
+    b.Código básico de un controlador:
+        <?php
+        namespace App\Http\Controllers;
+        use App\Models\Users;
+        use App\Http\Controllers\Controller;
+
+        class UserController extends Controller
+        {
+            /**
+             * Show the profile for the given user.
+             *
+             * @param  int  $id
+             * @return Response
+             */
+            public function show($id)
+            {
+                return view('user.profile', ['user' => User::findOrFail($id)]);
+            }
+        }
+    NOTA: para ser llamado por el route: Route::get('user/{id}', 'UserController@show');. Si lo creamos en una sub-carpeta usamos Route::get('user/{id}', 'sub_carpeta\UserController@show');
+
+    c. Método singleton o clase con un simple método
+    public function __invoke($id)
+    {
+        return view('user.profile', ['user' => User::findOrFail($id)]);
+    }
+    NOTA: para llamarlo: Route::get('user/{id}', 'UserController');//nótese que no se llama a ningún método.
+
+    d. se puede definir middleware dentro del controlador usando su constructor
+        public function __construct()
+        {
+            $this->middleware('auth');
+            $this->middleware('log')->only('index'); //sólo en el método index del controlador será invocado este middleware
+            $this->middleware('subscribed')->except('store');//ignorar el middleware si el método store es el invocado
+        }
+    e. si algo viene por POST u otro método:
+        ++ Pasar este primer parámetro a la función que lo recibirá
+            public function anyFunction(Request $request)
+
+        ++ Si el request es un JSON con esto transformamos lo enviado en JSON para su fácil manipulación
+            $data=json_decode($request->getContent(), true);
+
+            $data_name = $request->input('actor.name');//recomendado
+
+        ++ Para obtener todo el request en forma de arreglo
+            $input = $request->all();
+
+        ++ Para obtener una variable del input que vine en el request
+            $request->input('name');
+
+        ++ Para asignarle un valor por defecto en caso de que no existe o sea null
+            $request->input('name','default_value');
+
+        ++ En caso de inputs en forma de arreglo como  checkbox o files:
+            $request->input('products.0.name');
+
+        ++ Para acceder a todos los recurso del input en forma de arreglo
+            $names=$request->input('products.*.name');
+            $values=$request->input('products.*');
+
+        ++para acceder a un input por medio como nombre de atributos
+            $name = $request->name; //esto es delicado ya que puede haber atributos predeterminado de request que tengan el mismo nombre
+
+        ++ Para obtener las variables en forma de arreglo pero sólo unas específicas
+            $input = $request->only(['username', 'password']);
+
+            $input = $request->only('username', 'password');
+
+        ++ Para obtener las variables excepto las que no deseemos
+            $input = $request->except(['credit_card']);
+
+            $input = $request->except('credit_card');
+
+        ++Para saber si existe una variable
+            $request->has('name')
+
+        ++ Para guardar las variable del request en la sesión para ser usadas en otro request
+            $request->flash();
+
+        ++ Para indicar cuales variable son las únicas que se deben flashear
+            $request->flashOnly(['username', 'email']);
+
+        ++ Para excluir variable a flashear
+            $request->flashExcept('password');
+
+        ++ En el siguiente request, para obtener el valos flasheado del anterior request
+            $username = $request->old('username');
+
+        ++ Para acceder a variable sguardada en coockies
+            $value = $request->cookie('name');
+
+        ++ Para indicar el tiempo de vencimiento de las coockies
+            $value = $request->cookie('name',$minutes);
+
+        ++ Para obtener archivos
+            $file = $request->file('photo');
+
+            $file = $request->photo;
+
+            $photos = \Illuminate\Support\Facades\Input::file('photos');
+
+        ++Para saber si un archivo está presente en el request
+            $request->hasFile('photo')
+
+        ++ Para conocer si es válido el archivo
+            $request->file('photo')->isValid()
+
+        ++ Para saber la ruta del archivo
+            $path = $request->file('photo')->path();
+
+            $path = $request->photo->path();
+
+        ++ Para saber la extensión del archivo
+            $extension = $request->file('photo')->extension();
+
+            $extension = $request->photo->extension();
+
+            $extension = $file->getClientOriginalExtension(); //funciona usando Input::file
+
+        ++ Para saber el nombre del archivo en su forma inicial (quizás haya sido renombrado antes de enviarlo o incluso en el mismo servidor)
+            $name=$file->getClientOriginalName(); //funciona usando Input::file
+
+        ++ Para mover el archivo de la carpeta temporal al directorio de destino que se desea
+            $path = $request->photo->store('images');
+
+            $path = $request->photo->store('images', 's3');//s3 es el nombre del disco duro
+
+        ++ Para guardar el archivo y renombrarlo
+            $path = $request->photo->storeAs('images', 'filename.jpg');
+
+            $path = $request->photo->storeAs('images', 'filename.jpg', 's3');//s3 es el nombre del disco duro
+
+            $file->move($directory, $name);//funciona usando Input::file
+
+        ++ Si hay más de una variable a pasarle al método con el request, se deben poner a la derecha de request
+            public function anyFunction(Request $request,$param1,$param2)
+
+        ++ Para saber la ruta de donde vino el request
+            $uri = $request->path();
+        NOTA: sólo la ruta relativa se sabrá
+
+        ++Para saber la ruta absoluta
+            $url = $request->url();
+
+        ++ Para saber la ruta absoluta más la relativa
+            $url = $request->fullUrl();
+
+        ++Para saber el método
+            $request->isMethod('post')
+
+        ++ Para saber si existe cierta variable dentro del request
+            $request->is('admin/*')
+
+    f. Para usar una vista y retornarla
+        return view('post.create');
+
+        return view('post.create', $data);//para pasarle datos

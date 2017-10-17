@@ -1,0 +1,40 @@
+* Para gestionar las respuestas (puede ser usar en middleware, controller o los mismo routes con functions)
+    Consideraciones:
+
+        a. Para retornar a la ventana anterior
+            back()
+
+        b. Para retornar a la venta anterior, pero con todos los input que tenía 
+
+            back()->withInput();
+
+        c. Para redireccionar indicando el controlador a invocar 
+
+            redirect()->action('HomeController@index') //NO SE RECOMIENDA,. PERJUDICA EL CACHEO EN PRODUCCIÓN
+
+            redirect()->action('HomeController@index',['id' => 1]) //NO SE RECOMIENDA,. PERJUDICA EL CACHEO EN PRODUCCIÓN
+
+        d. Para redireccionar y guardar una variable flash
+
+            return redirect('dashboard')->with('status', 'Profile updated!');
+
+        e. Para acceder al contenido original de la respuesta
+
+            $data=$response->original; //funciona con el $response() de $next() en middleware, no provado con response()
+
+        f. Para transforma la respuesta en un json
+
+           $response=response()->json($data, $current_type,['content-type'=>'application/json; charset=utf-8','cualquier-variable-header'=>'valor']);
+        NOTA: $current_type puede ser 200 (success),500(error) o 400(fail)
+
+        g. Si la respuesta que se quiere es la descargar de un archivo (se forza la descarga)
+
+            return response()->download($pathToFile);
+
+            return response()->download($pathToFile, $name, $headers);//más el nombre del archivo y cabeceras, quizás se quiera incluir más información como una variable especial o un token
+
+        h. Si no se quiere que se descargue el archivo , sólo que se retorne el archivo como respuesta
+
+            return response()->file($pathToFile);
+
+            return response()->file($pathToFile, $headers);

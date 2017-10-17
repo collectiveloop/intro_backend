@@ -1,0 +1,109 @@
+a. Se definen en config/queue.php, en cada conexión el atributo queue puede ponerse high o low
+
+b. En caso que el tipo de conexión sea database se debe ejecutar migration y crear la tabla necesaria
+    php artisan queue:table //crea los archivos de migration
+    php artisan queue:failed-table //crea migration de la tabla para fails
+    php artisan migrate
+NOTA: conviene mucho guardar los jov vía database para guardar trazas del lo que se ejecuta incluyendo los fails
+
+c. Otros paquetes para conexiones remotas
+    Amazon SQS: composer require aws/aws-sdk-php ~3.0
+    Beanstalkd: composer require  pda/pheanstalk ~3.0
+    Redis: composer require  predis/predis ~1.0
+
+d. Para crear un Job
+    php artisan make:job SendReminderEmail
+NOTA: sino hay carpeta app/jobs, la crea
+
+e. Forma de un Job
+    namespace App\Jobs;
+
+    use App\Podcast;
+    use App\AudioProcessor;
+    use Illuminate\Bus\Queueable;
+    use Illuminate\Queue\SerializesModels;
+    use Illuminate\Queue\InteractsWithQueue;
+    use Illuminate\Contracts\Queue\ShouldQueue;
+
+    class ProcessPodcast implements ShouldQueue
+    {
+        use InteractsWithQueue, Queueable, SerializesModels;
+
+        protected $podcast;
+
+        /**
+         * Create a new job instance.
+         *
+         * @param  Podcast  $podcast
+         * @return void
+         */
+        public function __construct(Podcast $podcast)
+        {
+            $this->podcast = $podcast;
+        }
+
+        /**
+         * Execute the job.
+         *
+         * @param  AudioProcessor  $processor
+         * @return void
+         */
+        public function handle(AudioProcessor $processor)
+        {
+            // Process uploaded podcast...
+        }
+
+        /**
+         * The job failed to process.
+         *
+         * @param  Exception  $exception
+         * @return void
+         */
+        public function failed(Exception $exception)
+        {
+            // Send user notification of failure, etc...
+        }
+    }
+    NOTA: handle  es ejecutado cuando se despacha el trabajo.
+
+f. Para despachar un trabajo 
+    dispatch(new ProcessPodcast($podcast));
+    dispatch((new Job)->onQueue('emails'));//pone el job dentro del queue email y lo ejecuta junto a los otros jobs de email despachados    
+
+g. Para ejecutar un Job con retraso
+    $job = (new ProcessPodcast($podcast))->delay(Carbon::now()->addMinutes(10));//en este caso usamos carbon para indicar que se ejecute en 10 
+    minutos (desde la hora actual + 10 minutos)
+    dispatch($job);
+
+h. Para indicar que se debe despachar usando una conexión determinado y no la que es por defecto
+    $job = (new ProcessPodcast($podcast))->onConnection('sqs');
+
+i. Uso eficiente de los métodos
+    $job = (new ProcessPodcast($podcast))
+        ->onConnection('sqs')
+        ->onQueue('processing');
+
+j. Para mandar a ejecutar todo lo que fue despachado
+    php artisan queue:work
+    php artisan queue:work redis //le indicamos que conexión debe ser ejecutada
+    php artisan queue:work redis --queue=emails //le indicamos que debe usarse la conexión redis y ejecutar los queue de tipo email
+    php artisan queue:work redis --tries=3 //máximo tres intentos, el fallo se guarda en la tabla fallos
+
+k. Como adición a (a), se pued establecer la prioridad del job programáticamente al despacharlo
+    dispatch((new Job)->onQueue('high'));
+    php artisan queue:work --queue=high,low //por comandos, primero se ejecuta todo lo que tenga high despues normal y despues low
+
+l. para matar los jobs 
+    php artisan queue:restart
+NOTA: despues que se ejecutan quedan durmientes, se debe ejecutar este comando para limpiarlos workers
+
+ll. Para conexión se puede poner este atributo retry_after en segundos, indicamos con esto cuanto tiempo debe esperar en cada ejecución del Job
+
+m. para ver los procesos fallados
+    php artisan queue:failed
+
+n. para indicar que ejecute de nuevo cierto proceso
+    php artisan queue:retry 5 //5 es el id del job fallado, ver m
+    php artisan queue:retry all //reintentado todo lo fallado
+    php artisan queue:forget 5 //elimina el job 5 que fue fallido, no estará disponible para un siguiente retry
+    php artisan queue:flush //elimina todo los job fallidos, retry no hará nada

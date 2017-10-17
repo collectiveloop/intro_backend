@@ -1,0 +1,63 @@
+Consideraciones:
+    a. para usarlo en un formulario, poner el siguiente código dentro del form al principio
+        <form method="POST" action="/profile">
+            {{ csrf_field() }}
+            ...
+        </form>
+
+    b. La clase VerifyCsrfToken debe estar registrada en el kernel como un middleware de uso global.
+
+    c. estructura de una clase VerifyCsrfToken :
+        <?php
+        namespace App\Http\Middleware;                
+        class VerifyCsrfToken extends \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken
+        {
+            /**
+             * The URIs that should be excluded from CSRF verification.
+             *
+             * @var array
+             */
+            protected $except = [
+                'stripe/*',
+                'xapi/actors/*/modules/*/scenes/*/sections/*'
+            ];
+        },
+
+    d. Se debe poner el csrf token en el header html:
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    e. si se usa un webservices y no se usa un form tradicional, se debe poner el csrf token en el header de la solicitud,
+    aprovechando la declaración de la etiqueta meta (letra d):
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            type:'POST',
+            beforeSend: function (request)
+            {
+                request.setRequestHeader('X-CSRF-TOKEN', $('meta[name="csrf-token"]').attr('content'));
+            },
+            url: 'entities',
+            data: 'json=' + escape(JSON.stringify(createRequestObject)),
+            processData: false,
+            success: function(msg) {
+                $("#results").append('The result ='+ StringifyPretty(msg));
+            }
+        });
+
+        $.ajax({
+            url: 'YourRestEndPoint',
+            headers: {                        
+                'X_CSRF_TOKEN':$('meta[name="csrf-token"]').attr('content'),
+                'Content-Type':'application/json'
+            },
+            method: 'POST',
+            dataType: 'json',
+            data: YourData,
+            success: function(data){
+                console.log('succes: '+data);
+            }
+        });

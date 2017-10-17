@@ -1,0 +1,144 @@
+a. En config/filesystems.php esta la configuración de cada tipo de de storage, 
+aqui el método de guardado (local o externo) se le llama disco (disk)
+
+b. Para servicios como amazon s3 se necesita instalar
+    Amazon S3: league/flysystem-aws-s3-v3 ~1.0
+Adicionalmente en filesystem
+    's3' => [
+        'driver' => 's3',
+        'key' => 'your-key',
+        'secret' => 'your-secret',
+        'region' => 'your-region',
+        'bucket' => 'your-bucket',
+    ],
+
+c. Para servicios como Rackspace se necesita instalar
+Rackspace: league/flysystem-rackspace ~1.0
+
+Adicionalmente en filesystem
+    rackspace' => [
+        'driver'    => 'rackspace',
+        'username'  => 'your-username',
+        'key'       => 'your-key',
+        'container' => 'your-container',
+        'endpoint'  => 'https://identity.api.rackspacecloud.com/v2.0/',
+        'region'    => 'IAD',
+        'url_type'  => 'publicURL',
+    ],
+
+d. Para servicios locales no hay necesidad de instalar nada, en filesystem esta local y public, 
+ahí mismo dice la ruta donde se guardan los archivos.
+    'local' => [
+        'driver' => 'local',
+        'root' => storage_path('app'),
+    ],
+
+    'public' => [
+        'driver' => 'local',
+        'root' => storage_path('app/public'),
+        'visibility' => 'public',
+    ],
+
+e. Para ftp agregar el filesystem en el apartado de disks
+    'ftp' => [
+        'driver'   => 'ftp',
+        'host'     => 'ftp.example.com',
+        'username' => 'your-username',
+        'password' => 'your-password',
+
+        // Optional FTP Settings...
+        // 'port'     => 21,
+        // 'root'     => '',
+        // 'passive'  => true,
+        // 'ssl'      => true,
+        // 'timeout'  => 30,
+    ],
+
+f. Para guardar archivos en el disco definido por defecto en filesystem
+    use Illuminate\Support\Facades\Storage;
+
+    Storage::put('avatars/1', $fileContents);//esto a paunta por defecto a local
+
+g. Par aguardar archivo s un disco específico
+    Storage::disk('s3')->put('avatars/1', $fileContents);
+    Storage::disk('local')->put('avatars/1', $fileContents);
+    Storage::disk('ftp')->put('avatars/1', $fileContents);
+
+h. Para obtener un archivo guardado previamente
+    $contents = Storage::get('file.jpg');
+    $contents = Storage::disk('s3')->get('file.jpg');
+
+i. Para determinar si un archivo esta guardado realmente o no
+    $exists = Storage::disk('s3')->exists('file.jpg');
+
+j. Para obtener una ruta del recurso solicitado, (el dominio por defecto para local o toda la ruta del servidor remoto)
+    $url = Storage::url('file1.jpg');
+    $url = Storage::disk('s3')->url('file1.jpg');
+
+k. Para conocer el tasmaño de los archivos
+    $size = Storage::size('file1.jpg');
+
+l. Para conocer la última fecha de modificación
+    $time = Storage::lastModified('file1.jpg');
+
+ll. Para hacer streaming de un archivo controlar el proceso de guardado
+    Storage::putFile('photos', new File('/path/to/photo')); //el nombre del archivo se genera automáticamente
+    Storage::putFileAs('photos', new File('/path/to/photo'), 'photo.jpg'); //indicamos el nombre
+
+m. Para controlar la visibilida del archvo no (tema de accederlo por URL)
+    Storage::putFile('photos', new File('/path/to/photo'), 'public');
+
+n. Para escrbir en archivos d etexto al final o al comienzo (verificar si sirve en .zip)
+    Storage::prepend('file.log', 'Prepended Text');
+    Storage::append('file.log', 'Appended Text');
+
+o. Para copiar archivos
+    Storage::copy('old/file1.jpg', 'new/file1.jpg');
+
+p. Para mover archivos de una localización a otra
+    Storage::move('old/file1.jpg', 'new/file1.jpg');
+
+q. Si hay un request de un archivo y se quiere guardar los archivos (se usar el objeto request que tiene una implementación de storage)
+    $request->file('avatar')->store('avatars');
+
+    $path = $request->file('avatar')->storeAs(
+        'avatars', $request->user()->id
+    );
+
+    $path = $request->file('avatar')->store(
+        'avatars/'.$request->user()->id, 's3'
+    );
+
+r. Para guardar el archivo del request y ponerle nombre y hacer todo lo que queramos usando la clase storage
+    $path = Storage::putFile('avatars', $request->file('avatar'));
+    $path = Storage::putFile('avatars', $request->file('avatar'),'file.jpg');    
+NOTA: recordar que Storage es una clase estática, por lo cuál todo lo explicado en q lo podemos hacer aquí (ver el punto g y ll)
+
+s. Par ala visibilidad de un archivo
+    Storage::put('file.jpg', $contents, 'public');//puede ser private tambien
+
+    $visibility = Storage::getVisibility('file.jpg'); //retorna public o private
+
+    Storage::setVisibility('file.jpg', 'public'); //ya el archivo existe, solo actualizamos su visibilidad
+
+t. Borra archivos
+    Storage::delete('file.jpg'); //un sólo
+
+    Storage::delete(['file1.jpg', 'file2.jpg']); //múltiple
+
+u. Para obtener un arreglo de archivos de un directorio
+    $files = Storage::files($directory); //sólo los archivos del directorio
+
+    $files = Storage::allFiles($directory); //método que retorna tanto los archivos como las subcarpetas contenidas
+
+v. Para obtener sólo los directorios
+    $directories = Storage::directories($directory);
+
+    // Recursive...
+    $directories = Storage::allDirectories($directory); //todas las carpetas internas tambien se devuelven
+
+w. Para crear directorios
+    Storage::makeDirectory($directory);
+
+x. Para eliminar directorios
+    Storage::deleteDirectory($directory);

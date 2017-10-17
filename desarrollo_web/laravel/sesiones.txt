@@ -1,0 +1,86 @@
+Consideraciones:
+
+    a. El archivo de configuración se encuentra en config/session.php
+
+    b. Estos son los tipo de sesión que se pueden configurar: "file", "cookie", "database", "apc","memcached", "redis", "array"
+
+    c. Para acceder a las variables de sesión se puede hacer por los métodos globales, por request o por la clase estatica
+
+    d. Acceso por request
+        $value = $request->session()->get('key');
+
+        $value = $request->session()->get('key', 'default');
+
+        $value = $request->session()->get('key', function () {
+            return 'default';
+        });
+
+        $data = $request->session()->all();
+
+    e. Por lo métodos globales
+        session('key');
+
+        session('key', 'default');
+
+        $data = session()->all();
+
+    f. Por la clase estática
+
+        Session::get('key')
+
+    g. Para saber si existe la variable de sesión (OJO null significa no presente para este método)
+        $request->session()->has('users')
+
+        Session::has('email')
+
+        session()->has('users')
+
+    f. si queremos saber si existe la variable pero no importar si su valor es null
+        $request->session()->exists('users')
+
+        Session::exists('users')
+
+        session()->exists('users')
+
+    g. Para guardar valores simples en la sesión
+        $request->session()->put('key', 'value');
+
+        session(['key' => 'value']);
+
+        Session::put('email', $email);
+
+    h. Para guardar Arreglos
+        Session::push('user', $data);
+
+        $request->session()->push('user.teams', 'developers');//guardaría user[teams=>['developers']], developers estaría en la posición 0 de teams
+    NOTA: si se usa . como separador en el nombre de la sessión, lo que esté a la derecha del punto será el índice y no numérico como por defecto es
+
+    i. para obtener el arreglo guardado:
+        $user = Session::get('user');
+        $teams=$user['teams'][0];//developer
+
+    j. Para borar items
+        $value = $request->session()->pull('key', 'default');//defualt es opcional, en caso de que no exista key
+
+    k. Para borra un item de la sesión
+        Session::forget('key');
+
+        $request->session()->forget('key');
+
+        session()->forget('key');
+
+    l. Para borrar todo la variable de sesión
+        Session::flush();
+
+        $request->session()->flush();
+
+        session()->flush();
+
+
+    ll. Si se quiere que algo que almacenado en la sesión hasta el siguiente request y se borre automaticamente
+        $request->session()->flash('status', 'Task was successful!');
+
+    m. Si se quiere en el siguient erequest que aún persista los datos para otro request más
+        $request->session()->reflash();
+
+        $request->session()->keep(['username', 'email']);//sólo username e email persistirán en el siguiente request

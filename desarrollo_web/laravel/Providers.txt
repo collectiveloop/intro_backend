@@ -1,0 +1,2 @@
+* Para crear providers se ejecuta el siguiente comando:
+	php artisan make:provider RiakServiceProvider

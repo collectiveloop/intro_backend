@@ -1,0 +1,203 @@
+a. Para crear un archivo migración
+    php artisan make:migration create_users_table //create_users_table es el nombre del archivo
+    php artisan make:migration create_users_table --create=users //se crea la lógica para     
+    php artisan make:migration add_votes_to_users_table --table=users --path=database/migrations/folder //aqui usamos una subcarpeta para alojar le archivo de migration a crear
+
+b. para borra un archivo migration
+    ++ Borrar manualmente el archivo
+    ++ ejecutar composer dump-autoload
+    ++quizás si ya se ejecutó el migrate: php artisan migrate:rollback
+
+c. para ejecutar la migration 
+    php artisan migrate
+    php artisan migrate --force //aunque las tablas tengan datos de forza a recrear todo, usar --force es delicado
+    php artisan migrate:refresh //hace rollback y ejecuta de nuevo migrate, en pocas palabras es un remigrate o sobreescribir la migración
+    php artisan migrate:refresh --seed //ejecuta los seeds (la inserción de datos iniciales definidas en el migration)
+    php artisan migrate:refresh --step=5
+
+d. Si hubo algo malo podemos echar para atrás la ejecución de una migración con
+    php artisan migrate:rollback //esta para la última migración
+    php artisan migrate:rollback --step=5 //sólo 5 migraciones se echan para atrás
+    php artisan migrate:reset //para echar para atrás TODAS las migraciones
+
+e. Operaciones sobre las tablas
+    Schema::create('users', function (Blueprint $table) {
+        $table->increments('id'); //campo clave autoincremental
+    });
+
+    Schema::connection('foo')->create('users', function ($table) {
+        $table->increments('id');
+    }); //para apuntar a una conexión específica
+
+    Schema::create('users', function ($table) {
+        $table->engine = 'InnoDB';
+        $table->increments('id');
+    });
+
+    Schema::table('flights', function ($table) {
+        $table->softDeletes();
+    }); //borrados suaves
+
+    Schema::rename($from, $to);//renombrar una tabla
+
+    Schema::drop('users'); //Para borrar
+    Schema::dropIfExists('users'); //Parra borra si existe
+
+f. Para verificar la existencia de una tabla
+    if (Schema::hasTable('users')) {
+        //
+    }
+
+g. Para verificar la existencia de una columna en una tabla
+    if (Schema::hasColumn('users', 'email')) {
+        //
+    }
+
+h. Definición de columnas
+    $table->bigIncrements('id');	Incrementing ID (primary key) using a "UNSIGNED BIG INTEGER" equivalent.
+    $table->bigInteger('votes');	BIGINT equivalent for the database.
+    $table->binary('data');	BLOB equivalent for the database.
+    $table->boolean('confirmed');	BOOLEAN equivalent for the database.
+    $table->char('name', 4);	CHAR equivalent with a length.
+    $table->date('created_at');	DATE equivalent for the database.
+    $table->dateTime('created_at');	DATETIME equivalent for the database.
+    $table->dateTimeTz('created_at');	DATETIME (with timezone) equivalent for the database.
+    $table->decimal('amount', 5, 2);	DECIMAL equivalent with a precision and scale.
+    $table->double('column', 15, 8);	DOUBLE equivalent with precision, 15 digits in total and 8 after the decimal point.
+    $table->enum('choices', ['foo', 'bar']);	ENUM equivalent for the database.
+    $table->float('amount', 8, 2);	FLOAT equivalent for the database, 8 digits in total and 2 after the decimal point.
+    $table->increments('id');	Incrementing ID (primary key) using a "UNSIGNED INTEGER" equivalent.
+    $table->integer('votes');	INTEGER equivalent for the database.
+    $table->ipAddress('visitor');	IP address equivalent for the database.
+    $table->json('options');	JSON equivalent for the database.
+    $table->jsonb('options');	JSONB equivalent for the database.
+    $table->longText('description');	LONGTEXT equivalent for the database.
+    $table->macAddress('device');	MAC address equivalent for the database.
+    $table->mediumIncrements('id');	Incrementing ID (primary key) using a "UNSIGNED MEDIUM INTEGER" equivalent.
+    $table->mediumInteger('numbers');	MEDIUMINT equivalent for the database.
+    $table->mediumText('description');	MEDIUMTEXT equivalent for the database.
+    $table->morphs('taggable');	Adds unsigned INTEGER taggable_id and STRING  taggable_type.
+    $table->nullableTimestamps();	Same as timestamps().
+    $table->rememberToken();	Adds remember_token as VARCHAR(100) NULL.
+    $table->smallIncrements('id');	Incrementing ID (primary key) using a "UNSIGNED SMALL INTEGER" equivalent.
+    $table->smallInteger('votes');	SMALLINT equivalent for the database.
+    $table->softDeletes();	Adds nullable deleted_at column for soft deletes.
+    $table->string('email');	VARCHAR equivalent column.
+    $table->string('name', 100);	VARCHAR equivalent with a length.
+    $table->text('description');	TEXT equivalent for the database.
+    $table->time('sunrise');	TIME equivalent for the database.
+    $table->timeTz('sunrise');	TIME (with timezone) equivalent for the database.
+    $table->tinyInteger('numbers');	TINYINT equivalent for the database.
+    $table->timestamp('added_on');	TIMESTAMP equivalent for the database.
+    $table->timestampTz('added_on');	TIMESTAMP (with timezone) equivalent for the database.
+    $table->timestamps();	Adds nullable created_at and updated_at columns.
+    $table->timestampsTz();	Adds nullable created_at and updated_at (with timezone) columns.
+    $table->unsignedBigInteger('votes');	Unsigned BIGINT equivalent for the database.
+    $table->unsignedInteger('votes');	Unsigned INT equivalent for the database.
+    $table->unsignedMediumInteger('votes');	Unsigned MEDIUMINT equivalent for the database.
+    $table->unsignedSmallInteger('votes');	Unsigned SMALLINT equivalent for the database.
+    $table->unsignedTinyInteger('votes');	Unsigned TINYINT equivalent for the database.
+    $table->uuid('id');	UUID equivalent for the database.
+
+i. Modificadores
+    ->after('column')	Place the column "after" another column (MySQL Only)
+    ->comment('my comment')	Add a comment to a column
+    ->default($value)	Specify a "default" value for the column
+    ->first()	Place the column "first" in the table (MySQL Only)
+    ->nullable()	Allow NULL values to be inserted into the column
+    ->storedAs($expression)	Create a stored generated column (MySQL Only)
+    ->unsigned()	Set integer columns to UNSIGNED
+    ->virtualAs($expression)	Create a virtual generated column (MySQL Only)
+NOTA: usando chaining, se pueden poner inmediato a la definición de la columna respectiva
+
+j. Para modificar columnas 
+    composer require doctrine/dbal //es necesario para crear las Sql y todo lo necesario para modificar
+    
+    Schema::table('users', function ($table) {
+        $table->string('name', 50)->change();//cambiamos el tipo de dato
+    });
+
+    Schema::table('users', function ($table) {
+        $table->string('name', 50)->nullable()->change();//cambiamos el tipo de datos y ponemos nullbale a la actual definición de la columna
+    });
+
+    Schema::table('users', function ($table) {
+        $table->renameColumn('from', 'to');
+    });
+    
+    Schema::table('users', function ($table) {
+        $table->dropColumn('votes'); /// borramos la actual columna
+    });
+
+    Schema::table('users', function ($table) {
+        $table->dropColumn(['votes', 'avatar', 'location']);//borramos estas tres columnas
+    });
+
+k. Índices
+    $table->string('email')->unique();//defincimos como única
+    $table->unique('email'); //una vez definida, la actualizamos declarándola única, actualización
+    $table->index(['account_id', 'created_at']); //para definir múltiples índice de una vez
+    $table->index('email', 'my_index_name'); //indicamos el nombre del índice
+
+l. lista de índices
+    $table->primary('id');	Add a primary key.
+    $table->primary(['first', 'last']);	Add composite keys.
+    $table->unique('email');	Add a unique index.
+    $table->unique('state', 'my_index_name');	Add a custom index name.
+    $table->unique(['first', 'last']);	Add a composite unique index.
+    $table->index('state');	Add a basic index.
+ll. Para borrar índices
+    $table->dropPrimary('users_id_primary'); //necesita el nombre del índice	
+    $table->dropUnique('users_email_unique'); //necesita el nombre del índice	
+    $table->dropIndex('geo_state_index'); //necesita el nombre del índice
+    Schema::table('geo', function ($table) {
+    $table->dropIndex(['state']); // eliminamos el índice de state llamado 'geo_state_index'
+});
+
+m. Claves foráneas
+    Schema::table('posts', function ($table) {
+        $table->integer('user_id')->unsigned();
+        $table->foreign('user_id')->references('id')->on('users');
+    });
+
+    Schema::table('posts', function ($table) {
+        $table->integer('user_id')->unsigned();
+        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+    });
+
+    Schema::table('posts', function ($table) {
+        $table->integer('user_id')->unsigned();
+        $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade');//verificar opciones del manejador de base de datos y usarlos como parámetro        
+    });
+
+    $table->dropForeign('posts_user_id_foreign'); //eliminamos la clave por el nombre de la clave foránea
+    $table->dropForeign(['user_id']); //eliminamos la clave por la columna
+
+    Schema::enableForeignKeyConstraints();//Activamos los constraints, conviene cuando queremos borrar una tabla o registros que están vinculados con otros en otras tablas
+    Schema::disableForeignKeyConstraints(); //desactivamos los constraints
+
+n. Seeds
+    ++ Están UBicados en database/seeds
+
+    ++ Para generar un seed
+        php artisan make:seeder UsersTableSeeder //el nombre debe terminar en Seeder por convención
+
+    ++ Para insertar 
+        DB::table('users')->insert([
+            'name' => str_random(10),
+            'email' => str_random(10).'@gmail.com',
+            'password' => bcrypt('secret'),
+        ]);
+
+    ++ Para llamar otros seeders dentro de otro
+        public function run(){
+            $this->call(UsersTableSeeder::class);
+            $this->call(PostsTableSeeder::class);
+            $this->call(CommentsTableSeeder::class);
+        }
+
+    ++ Para correr los seeders
+        php artisan db:seed //corre todos los existentes
+        php artisan db:seed --class=UsersTableSeeder //sólo corre UsersTableSeeder
+        php artisan migrate:refresh --seed tanto migration de tablas como los seeders son ejecutados
+    

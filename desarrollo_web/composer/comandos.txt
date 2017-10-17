@@ -1,0 +1,4 @@
+TODO REQUIERE  que tengas los paquetes en el composr.json
+composer install instala paquetes todo
+composer update actualiza lo existente e instala lo necesario
+composer require new/package installa solo ese nuevo paquete

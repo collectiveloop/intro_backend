@@ -1,0 +1,66 @@
+﻿1. Instalar composer (ver carpeta composer e instalar).
+
+2. Ejecutar 
+	composer global require "laravel/installer" 
+desde cualquier directorio.
+
+3. Desde el directorio del proyecto ejecutar 
+	composer create-project --prefer-dist laravel/laravel nombre_proyecto
+
+4. cambiar permisos de lectura a los directorios: 
+	-nombre_proyecto/bootstrap/cache
+	-storage
+NOTA: incluyendo todos sus directorios interiores.
+
+5. Si no hay un api key generada en el archivo nombre_proyecto/.ENV, usar el siguiente comando php artisan key:generate.
+
+6. En config/database se configuran las conexiones.
+
+7. Para configurar los log de errores de laravel, en config/app
+	'log' => env('APP_LOG', 'daily')
+Esta opción ayuda a indicar como se generarán los archivos logs, otras opciones son: "single", "daily", "syslog", "errorlog". LOs los se almacenan en
+	storage/logs
+
+EXPLICACIÓN INTERNA:
+
+* Dentro de la carpeta config puedes crear libremente los archivos que se necesiten, cada archivo a lo interno consta de un return [], simplemente
+un arreglo asociativo con "indice"=> "valores", para usarlo en cualquier parte de nuestro código usamos
+	$value = config('archivo.indice');
+Para asignar valores en caliente desde cualquier parte del proyecto usaremos
+	\Config::set('archivo.indice',"valor") o config(['app.timezone' => 'America/Chicago']);
+NOTA: \ al principio indica que config es una clase estatica ubicada en la raiz del proyecto, esto se usa para los modelos, controladores y alguna otra
+clase que se vaya a usar sin necesidad de declarar al principio use \carpeta\libreria\...
+ES RECOMENDABLE USAR \ubicacion\Clase::metodo en pleno códigop  si esa librería no se usará en todos los métodos, así se evita una carga innecesaria 
+del archivo
+
+* En .ENV están las variables globales que usar Laravel
+
+* Para saber la ruta de la carpeta public
+    public_path() //ruta de servidor no de http
+
+* Para manejar la url y agregar una sección relativa
+    url('/login')
+
+* Para encriptar datos
+    encrypt($request->secret)
+NOTA: ver config /app.php para configurar el cifrado, key
+
+* Para desencriptar 
+    decrypt($encryptedValue);
+
+* Para aplicar encriptación bscrypt a valores como password
+    Hash::make($request->newPassword)
+*Para comparar un valor encriptado con uno no encriptado
+    if (Hash::check('plain-text', $hashedPassword)) {
+        // The passwords match...
+    }
+
+
+FINAL. para producción usar
+	- php artisan config:cache para activar la cache, esto une algunos archivos, para mejorar la velocidad del framework
+	- En .ENV poner APP_DEBUG=false
+	- En config/app:
+		++ 'debug' => env('APP_DEBUG', false)		
+        - php artisan route:cache para cachear los controladores, si todos son invocados desde el route (así debería ser)
+        - php artisan route:clear para deshacer el cacheado si queremos volver a cachear otra vez
+        - 'encrypt' => false en config/session.php para encriptar las variables de sesión
