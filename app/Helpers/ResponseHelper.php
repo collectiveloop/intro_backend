@@ -3,7 +3,7 @@ namespace App\Helpers;
 /**
 *
 * @version 1.0
-* @license Copyright  IF&L Chile 2017. Todos los derechos reservados.
+* @license Copyright  Sappitotech 2017. Todos los derechos reservados.
 * @author Junior Milano - Desarrollador Web
 * @overview Clase que gestiona los Products
 *

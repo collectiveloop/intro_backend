@@ -22,14 +22,14 @@ class Users extends Model implements AuthenticatableContract, CanResetPasswordCo
      *
      * @var array
      */
-    protected $fillable = ['full_name','password','first_name', 'last_name', 'email', 'external_id','image_profile', 'remember_token','job_title','job_description','commpany_name','platform'];
+    protected $fillable = ['user_name','password','first_name', 'last_name', 'email', 'external_id','image_profile', 'remember_token','job_title','job_description','company_name','platform'];
 
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
-    protected $hidden = ['password'];
+    protected $hidden = ['password','remember_token'];
 
     /**
     * Función para ver si hay token o no en el request

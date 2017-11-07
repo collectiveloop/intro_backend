@@ -97,41 +97,41 @@ return [
             'required'=>'',
         ],
         'id' => [
-            'required'=>'The ID es required',
+            'required'=>'The ID is required',
             'min'=>' The ID must be at least :min 1 character.',
             'numeric'=>' The ID must be numeric.'
         ],
         'first_name' => [
-            'required'=>'The :attribute es required',
+            'required'=>'The :attribute is required',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'last_name' => [
-            'required'=>'The :attribute es required',
+            'required'=>'The :attribute is required',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'email' => [
-            'required'=>'The :attribute es required',
+            'required'=>'The :attribute is required',
             'mail'=>' The :attribute must have a valid format.',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'username' => [
-            'required'=>'The username es required',
+            'required'=>'The username is required',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'full_name' => [
-            'required'=>'The :attribute es required',
+            'required'=>'The :attribute is required',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'job_title' => [
-            'required'=>'The :attribute es required',
+            'required'=>'The :attribute is required',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'company_name' => [
-            'required'=>'The :attribute es required',
+            'required'=>'The :attribute is required',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'job_description' => [
-            'required'=>'The :attribute es required',
+            'required'=>'The :attribute is required',
             'min'=>' The :attribute must be at least :min characters.'
         ],
         'password' => [
@@ -145,35 +145,53 @@ return [
       'not_direction_ajax' => 'Direction not found in the AJAX request',
       'invalid_values' =>'Invalid values for Login',
       'session_impossible' =>'It\'s not posible log in',
+      'register_session_impossible' =>'It\'s not posible register now',
       'not_token' => 'There is not token',
       'token_expired' => 'Token expired',
       'token_invalid' => 'Invalid token',
       'not_type_user' => 'There is not type user',
       'invalid_number' => 'There is an invalid number',
-      'email_exist' => 'The email already exists in the platform',
-      'username_exist' => 'The username already exists in the platform',
-      'register_send_email' => 'Register in It\'s possible',
-      'update_send_email' => 'Update in It\'s possible',
+      'email_no_exist' => 'The email does not exists in Intro App',
+      'email_exist' => 'The email already exists in Intro App',
+      'username_exist' => 'The username already exists in Intro App',
+      'register_send_email' => 'Register in Intro App',
+      'update_send_email' => 'Update in Intro App',
       'fail_send_email' => 'The email can not be sent',
       'success_register' => 'Successful registration',
-      'dear_email' => 'Estimado(a)',
-      'success_register_email' => 'Your are registered in It\'s possible',
-      'success_update_email' => 'Your are updated your information in It\'s possible',
+      'dear_email' => 'Dear',
+      'success_register_email' => 'Your are registered in Intro App',
+      'success_update_email' => 'Your are updated your information in Intro App',
+      'context_send_email' => 'You have started the process to reset your password, to continue click on the following link from your mobile device or tablet',
       'success_remember_email' => 'your password reminders instructions have been sent to your email',
+      'remember_password' => 'Remember password',
+      'remember_password_send_mail' => 'Remember password in intro App',
       'your_information_email' => 'Your information',
       'regards_email' => 'Regards',
       'user_email' => 'User',
       'email_email' => 'Email',
       'password_email' => 'Password',
+      'password_not_match' => 'Old password not match with your current password',
       'number_phones_email' => 'Number Phones',
       'user_not_found' => 'The user is not been found',
       'success_update' => 'Successful update',
+      'success_forgot_password' => 'The email reset password has been sent',
+      'forgot_password_sent' => 'The email reset password has been sent previously',
       'success_delete' => 'Successful Elimination',
       'not_permission' => 'The user does not have permission to access in this section',
       'not_external_login' => 'This user can not login by this platform',
       'login_by_external_facebook' => 'This user just can Login by Facebook',
       'login_by_external_linkedin' => 'This user just can Login by Linkedin',
       'login_by_external_google_plus' => 'This user just can Login by Google+',
+      'image_invalid_format' => 'Image with invalid format',
+      'invitation_not_found' => 'Invitation not found',
+      'invitation_accepted_invalid' => 'Invitation has been accepted, it can not be processed',
+      'invitation_rejected_invalid' => 'Invitation has been rejected, it can not be processed',
+      'is_contact' => 'This user is already a contact',
+      'is_contact_pending' => 'You have already sent an invitation to this person previously',
+      'content_invitation' => 'sent you an invitation in Intro Pro, click on the following link to accept',
+      'invitation_send_email' => 'Invitation in Intro App',
+      'accept_invitation' => 'Accept Invitation',
+      'invalid_user' =>'User invalid'
     ],
 
     /*

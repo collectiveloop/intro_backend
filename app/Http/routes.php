@@ -12,6 +12,8 @@
 */
 
 Route::pattern('id', '[0-9]+');
+Route::get('remember-link/{token}', 'UsersController@redirectLink');
+Route::get('invitations-link', 'ContactsController@redirectLink');
 Route::group(['prefix' => 'administration'], function(){
   Route::group(['middleware' => ['validate.admin_session']], function(){
     Route::get('dashboard/{lang?}', 'AdministrationController@dashboard');
@@ -23,33 +25,56 @@ Route::group(['prefix' => 'administration'], function(){
 });
 
 Route::group(['prefix' => 'login'], function(){
-    Route::post('authenticate/{lang?}', 'UsersController@authenticate');
-    Route::get('logout', 'UsersController@closeSession');
+  Route::post('authenticate/{lang?}', 'UsersController@authenticate');
+  Route::post('forgot-password/{lang?}', 'UsersController@forgotPassword');
+  Route::post('reset-password/{lang}', 'UsersController@resetPassword');
 });
 
 Route::group(['prefix' => 'user'], function(){
-    Route::post('{lang?}', 'UsersController@createUser');
-    Route::post('external/{lang?}', 'UsersController@createExternalUser');
-    Route::put('/setting/{id}/{lang?}', 'UsersController@createSettingUser');
+  Route::post('{lang?}', 'UsersController@createUser');
+  Route::post('external/{lang?}', 'UsersController@createExternalUser');
+  Route::post('change-password/{lang}', 'UsersController@changePassword');
 });
 
 Route::group(['middleware' => ['validate.session']], function(){
   Route::group(['prefix' => 'user'], function(){
-      Route::get('{lang?}', 'UsersController@getUser');
-      Route::put('{lang?}', 'UsersController@updateUser');
+    Route::get('{lang?}', 'UsersController@getUser');
+    Route::put('{lang?}', 'UsersController@updateUser');
   });
-    // --Login--
-    Route::group(['prefix' => 'login'], function(){
-        Route::get('token', 'UsersController@getToken');
-    });
+  // --Login--
+  Route::group(['prefix' => 'login'], function(){
+    Route::get('logout', 'UsersController@closeSession');
+    Route::get('token', 'UsersController@getToken');
+  });
 
-    // --PRODUCTOS--
-    Route::group(['prefix' => 'products'], function ($app) {
-      Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'ProductsController@getProductsPaginate');
-      Route::get('/{lang?}/count', 'ProductsController@getCountProducts');
-      Route::get('/{lang?}/{id}', 'ProductsController@getProduct');
-    	Route::post('/', 'ConfigController@createConfig');
-    	Route::put('{id}', 'ConfigController@updateConfig');
-    	Route::delete('{id}', 'ConfigController@deleteConfig');
-    });
+  Route::group(['prefix' => 'gainings'], function(){
+    Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'GainingsController@getGainingsPaginate');
+    Route::get('/{lang?}/count', 'GainingsController@getCountGainings');
+    Route::get('/{lang?}/{id}', 'GainingsController@getGain');
+  });
+
+  Route::group(['prefix' => 'intros'], function(){
+    Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'IntrosController@getIntrosPaginate');
+    Route::get('/{lang?}/count', 'IntrosController@getCountIntros');
+    Route::get('/{lang?}/{id}', 'IntrosController@getGain');
+    Route::get('/dashboard/{lang?}', 'IntrosController@getIntrosDashBoard');
+  });
+
+  // --CONTACTOS--
+  Route::group(['prefix' => 'contacts'], function ($app) {
+    Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'ContactsController@getContactsPaginate');
+    Route::get('/{lang?}/count', 'ContactsController@getCountContacts');
+    Route::get('/{lang?}/pending/page/{page}/quantity/{quantity}', 'ContactsController@getContactsPendingPaginate');
+    Route::get('/{lang?}/pending/count', 'ContactsController@getCountContactsPending');
+    Route::get('/{lang?}/search/page/{page}/quantity/{quantity}/{find?}', 'ContactsController@getContactsMixedPaginate');
+    Route::get('/{lang?}/{id}', 'ContactsController@getContact');
+    Route::get('/{lang?}/find/{email}', 'ContactsController@findContact');
+  	Route::post('{lang?}', 'ContactsController@addContact');
+    Route::put('{lang?}/accept/{id}', 'ContactsController@acceptInvitation');
+    Route::put('{lang?}/reject/{id}', 'ContactsController@rejectInvitation');
+
+
+    Route::put('{lang?}/{id}', 'ContactsController@updateContact');
+  	Route::delete('{lang?}/{id}', 'ContactsController@deleteContact');
+  });
 });
