@@ -421,7 +421,7 @@ class UsersController extends Controller
     * @memberof UsersController
     */
     public function redirectLink($token){
-      return view('redirect', ['url'=>'forgot-password','token' =>$token]);
+      return view('redirect', ['url'=>'forgot-password/','token' =>$token]);
     }
 
     /**
