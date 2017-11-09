@@ -136,8 +136,49 @@ return [
         ],
         'password' => [
             'required'=>' The password is required',
-            'min'=>' The :attribute must have at least :min characters.',
+            'min'=>' The :attribute must be at least :min characters.',
             'max'=>' The :attribute must have as maximum :max characters.',
+        ],
+        'job_description' => [
+          'required'=>'The :attribute is required',
+          'min'=>' The :attribute must be at least :min characters.'
+        ],
+        'address' => [
+          'required'=>'The :attribute is required',
+          'min'=>' The :attribute must be at least :min characters.'
+        ],
+        'contact_name' => [
+          'required'=>'The :attribute is required',
+          'min'=>' The :attribute must be at least :min characters.'
+        ],
+        'phone_number' => [
+          'required'=>'The :attribute is required',
+          'numeric'=>' The ID must be numeric.',
+          'min'=>' The :attribute must be at least :min characters.',
+          'max'=>' The :attribute must have as maximum :max characters.',
+        ],
+        'name' => [
+          'required'=>' The nane is required',
+          'min'=>' The name must be at least :min characters',
+          'max'=>' he name must have as maximum :max characters'
+        ],
+        'friend_1' => [
+          'required'=>' The contact 1 is required'
+        ],
+        'friend_2' => [
+          'required'=>' The contact 2 is required'
+        ],
+        'question_friend_1' => [
+          'required'=>' The contact 1 question is required',
+          'min'=>' The contact 1 question must be at least :min characters.'
+        ],
+        'question_friend_2' => [
+          'required'=>' The contact 2 question is required',
+          'min'=>' The contact 2 question must be at least :min characters.'
+        ],
+        'reason' => [
+          'required'=>' The reason is required',
+          'min'=>' The reason must be at least :min characters.'
         ],
     ],
     'messages' => [
@@ -191,7 +232,13 @@ return [
       'content_invitation' => 'sent you an invitation in Intro Pro, click on the following link to accept',
       'invitation_send_email' => 'Invitation in Intro App',
       'accept_invitation' => 'Accept Invitation',
-      'invalid_user' =>'User invalid'
+      'invalid_user' =>'User invalid',
+      'user_1_not_exist' =>'The friend 1 does not exist',
+      'user_2_not_exist' =>'The friend 2 does not exist',
+      'intros_exists' =>'The contacts have been introduced previously',
+      'invitation_email' => 'Contact Invitation in Intro App',
+      'success_invitation_email' =>' has sent you an invitation to contact with ',
+      'success_invitation_final_email' =>' click on the following link to accept'
     ],
 
     /*

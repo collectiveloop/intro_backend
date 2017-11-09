@@ -162,6 +162,24 @@ return [
           'min'=>' El nombre debe tener al menos :min caracteres',
           'max'=>' El nombre debe tener como máximo :max caracteres'
         ],
+        'friend_1' => [
+          'required'=>' El contacto 1 requerido'
+        ],
+        'friend_2' => [
+          'required'=>' El contacto 2 requerido'
+        ],
+        'question_friend_1' => [
+          'required'=>' La pregunta del contacto 1  es requerida',
+          'min'=>' La pregunta del contacto 1 debe tener al menos :min caracteres'
+        ],
+        'question_friend_2' => [
+          'required'=>' La pregunta del contacto 2  es requerida',
+          'min'=>' La pregunta del contacto 2 debe tener al menos :min caracteres'
+        ],
+        'reason' => [
+          'required'=>' La razón de la intro es requerida',
+          'min'=>' La razón de la intro debe tener al menos :min caracteres'
+        ],
     ],
     'messages' => [
       'not_direction' => 'La dirección no fue encontrada',
@@ -214,7 +232,13 @@ return [
       'content_invitation' => 'te ha enviado una invitación en Intro Pro, haz clic en el siguiente enlace para aceptar',
       'invitation_send_email' => 'Invitación en Intro App',
       'accept_invitation' => 'Acceptar Invitación',
-      'invalid_user' =>'Usuario inválido'
+      'invalid_user' =>'Usuario inválido',
+      'user_1_not_exist' =>'El contacto 1 no existe',
+      'user_2_not_exist' =>'El contacto 2 no existe',
+      'intros_exists' =>'Los contactos han sido presentados anteriormente',
+      'invitation_email' => 'Invitación de contacto in Intro App',
+      'success_invitation_email' =>' te ha enviado una invitación para que entres en contacto con ',
+      'success_invitation_final_email' =>' Haz clic sobre el siguiente enlace para aceptar la invitación'
     ],
     /*
     |--------------------------------------------------------------------------

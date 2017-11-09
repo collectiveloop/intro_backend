@@ -205,6 +205,130 @@ class IntrosController extends Controller
     }
 
     /**
+    * Función para insertar los intros de un usuario
+    * @author Junior Milano <junior@sappitotech.com>
+    * @return array
+    * @memberof IntrosController
+    */
+    public function addIntro($lang){
+      $data_user = $this->getDataUser();
+      if(!isset($data_user['id']))
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
+      if(trim($lang)!=='')
+        \App::setLocale($lang);
+
+      $inputs = Input::all();
+      //'number_phones' => 'required|min:7',
+      $validator = \Validator::make($inputs, [
+        'friend_1' => 'required',
+        'friend_2' => 'required',
+        'question_friend_1' => 'required|min:5',
+        'question_friend_2' => 'required|min:5',
+        'reason' => 'required|min:5'
+      ]);
+
+      if ($validator->fails()){
+        $errors = $validator->errors();
+        return ['status'=>'error','data'=>['message'=>$errors->all()]];
+      }
+
+      //validamos que el correo sea unico
+      $there_is_friend1=\App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id',$inputs['friend_1'])->first(['users.id','users.first_name','users.last_name','users.email']);
+      if(!$there_is_friend1)
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_1_not_exist'))]];
+
+      $there_is_friend2=\App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id',$inputs['friend_2'])->first(['users.id','users.first_name','users.last_name','users.email']);
+      if(!$there_is_friend2)
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_2_not_exist'))]];
+
+      $there_is_intros=Intros::where('id_user',$data_user['id'])->where(function($query) use($data_user,$inputs){
+        $query->where(function($query2) use($data_user,$inputs){
+          $query2->where('id_friend_1',$inputs['friend_1'])
+          ->where('id_friend_2',$inputs['friend_2']);
+        })->orWhere(function($query2) use($data_user,$inputs){
+          $query2->where('id_friend_1',$inputs['friend_2'])
+          ->where('id_friend_2',$inputs['friend_1']);
+        });
+      })->first();
+      if($there_is_intros)
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.intros_exists'))]];
+
+      $new_intro = Intros::create([
+        'id_user'=>$data_user['id'],
+        'id_friend_1'=>$inputs['friend_1'],
+        'id_friend_2'=>$inputs['friend_2'],
+        'reason'=>$inputs['reason'],
+        'friend_1_info'=>$inputs['question_friend_1'],
+        'friend_2_info'=>$inputs['question_friend_2']
+      ]);
+
+      $insert = [];
+      foreach ($inputs['gainings'] as $index =>$value) {
+        if($value===true || $value==='true'){
+          $insert[] = [
+            'id_intro'=>$new_intro['id'],
+            'id_gain'=>$index
+          ];
+        }
+      }
+      if(count($insert)>0)
+        \App\Models\GainingsIntros::insert($insert);
+
+      $email_data = [];
+      $email_data['full_name']=$there_is_friend1['first_name'].' '.$there_is_friend1['last_name'];
+      $email_data['email']=$there_is_friend1['email'];
+      $email_data['contact_name']=$data_user['first_name'].' '.$data_user['last_name'];
+      $email_data['friend_email']=$there_is_friend2['first_name'].' '.$there_is_friend2['last_name'];
+      $email_data['dear_email']=htmlentities(\Lang::get('validation.messages.dear_email'));
+      $email_data['success_invitation_email']=htmlentities(\Lang::get('validation.messages.success_invitation_email'));
+      $email_data['success_invitation_final_email']=htmlentities(\Lang::get('validation.messages.success_invitation_final_email'));
+      $email_data['accept_invitation_link']=htmlentities(\Lang::get('validation.messages.accept_invitation'));
+      $email_data['regards_email']=htmlentities(\Lang::get('validation.messages.regards_email'));
+      $email_data['invitation_email']=htmlentities(\Lang::get('validation.messages.invitation_email'));
+
+      \Mail::send('emails.invitation', $email_data, function($message) use ($email_data) {
+        $message->to($email_data['email']);
+        $message->subject($email_data['invitation_email']);
+      });
+      if(count(\Mail::failures()) > 0)
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
+
+
+      $email_data['full_name']=$there_is_friend2['first_name'].' '.$there_is_friend2['last_name'];
+      $email_data['email']=$there_is_friend2['email'];
+      $email_data['contact_name']=$data_user['first_name'].' '.$data_user['last_name'];
+      $email_data['friend_email']=$there_is_friend1['first_name'].' '.$there_is_friend1['last_name'];
+      $email_data['dear_email']=htmlentities(\Lang::get('validation.messages.dear_email'));
+      $email_data['success_invitation_email']=htmlentities(\Lang::get('validation.messages.success_invitation_email'));
+      $email_data['success_invitation_final_email']=htmlentities(\Lang::get('validation.messages.success_invitation_final_email'));
+      $email_data['accept_invitation_link']=htmlentities(\Lang::get('validation.messages.accept_invitation'));
+      $email_data['regards_email']=htmlentities(\Lang::get('validation.messages.regards_email'));
+      $email_data['invitation_email']=htmlentities(\Lang::get('validation.messages.invitation_email'));
+
+      \Mail::send('emails.invitation', $email_data, function($message) use ($email_data) {
+        $message->to($email_data['email']);
+        $message->subject($email_data['invitation_email']);
+      });
+      if(count(\Mail::failures()) > 0)
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
+
+      return ['status'=>'success','data'=>['message'=>htmlentities(\Lang::get('validation.messages.success_register'))]];
+    }
+
+    /**
+    * Función para redirecionar la pagina y abrir la app
+    * @author Junior Milano <junior@sappitotech.com>
+    * @return array
+    * @memberof ContactsController
+    */
+    public function redirectLink(){
+      $split = explode('/',url('/'));
+      $domain = $split[0];
+
+      return view('redirect', ['url'=>$domain.'/intros','token' =>'']);
+    }
+
+    /**
     * Función que retorna la cantidad de intros registradas en bd
     * @author Junior Milano <junior@sappitotech.com>
     * @return array
@@ -219,23 +343,5 @@ class IntrosController extends Controller
       $count = Intros::where('id_user',$data_user['id'])->count();
 
       return ['status'=>'success','data'=>['intros_count' => $count]];
-    }
-
-    /**
-    * Función que retorna la información de la intro pasada como parámetro
-    * @author Junior Milano <junior@sappitotech.com>
-    * @return array
-    * @memberof IntrosController
-    */
-    public function getGain($lang,$id){
-      $gain = Intros::where('id',$id)
-      ->first([
-        'id',
-        'gain',
-        'created_at',
-        'updated_at'
-      ]);
-
-      return ['status'=>'success','data'=>['intro' => $gain->toArray()]];
     }
 }

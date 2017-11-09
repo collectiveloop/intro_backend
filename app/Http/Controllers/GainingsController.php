@@ -28,38 +28,24 @@ class GainingsController extends Controller
     }
 
     /**
-    * Función que retorna la información de las ganancias de forma paginada
+    * Función que retorna la información de las ganancias existentes en bd
     * @author Junior Milano <junior@sappitotech.com>
     * @return array
     * @memberof GainingsController
     */
-    public function getGainingsPaginate($lang,$page,$quantity){
+    public function getGainings($lang){
       $gains = Gainings::orderBy('created_at', 'desc')
       ->orderBy('updated_at', 'desc')
-      ->limit($quantity)
-      ->offset(($page-1)*$quantity)
       ->get([
         'id',
-        'gain'
+        'gain_'.$lang.' as option'
       ]);
 
       return ['status'=>'success','data'=>['gainings' => $gains->toArray()]];
     }
 
     /**
-    * Función que retorna la cantidad de ganancias registradas en bd
-    * @author Junior Milano <junior@sappitotech.com>
-    * @return array
-    * @memberof GainingsController
-    */
-    public function getCountGainings($lang){
-      $count = Gainings::count();
-
-      return ['status'=>'success','data'=>['gainings_count' => $count]];
-    }
-
-    /**
-    * Función que retorna la información de la gananacia pasada como parámetro
+    * Función que retorna la información de la ganancia pasada como parámetro
     * @author Junior Milano <junior@sappitotech.com>
     * @return array
     * @memberof GainingsController
@@ -68,7 +54,8 @@ class GainingsController extends Controller
       $gain = Gainings::where('id',$id)
       ->first([
         'id',
-        'gain',
+        'gain_es',
+        'gain_en',
         'created_at',
         'updated_at'
       ]);

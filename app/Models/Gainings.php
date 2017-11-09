@@ -16,7 +16,7 @@ class Gainings extends Model{
      *
      * @var array
      */
-    protected $fillable = ['gain','created_at','updated_at'];
+    protected $fillable = ['gain_es','gain_en','created_at','updated_at'];
 
     /**
      * The attributes excluded from the model's JSON form.

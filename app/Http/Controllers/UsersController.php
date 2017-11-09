@@ -506,10 +506,10 @@ class UsersController extends Controller
       $user = Users::where('id',$data_user['id'])->first();
 
       if(!$user)
-        return ['status'=>'error','data'=>['ddd' =>\Hash::make($inputs['old_password']), 'message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
 
       if (!\Hash::check($inputs['old_password'],$user['password']  )) {
-          return ['status'=>'error','data'=>['ddd' =>\Hash::make($inputs['old_password']), 'message'=>htmlentities(\Lang::get('validation.messages.password_not_match'))]];
+          return ['status'=>'error','data'=>[ 'message'=>htmlentities(\Lang::get('validation.messages.password_not_match'))]];
       }
 
       $user->update(['password'=>\Hash::make($inputs['password']),'remember_token'=>'']);

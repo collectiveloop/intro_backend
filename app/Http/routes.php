@@ -14,6 +14,7 @@
 Route::pattern('id', '[0-9]+');
 Route::get('remember-link/{token}', 'UsersController@redirectLink');
 Route::get('invitations-link', 'ContactsController@redirectLink');
+Route::get('intros-link', 'IntrosController@redirectLink');
 Route::group(['prefix' => 'administration'], function(){
   Route::group(['middleware' => ['validate.admin_session']], function(){
     Route::get('dashboard/{lang?}', 'AdministrationController@dashboard');
@@ -48,16 +49,15 @@ Route::group(['middleware' => ['validate.session']], function(){
   });
 
   Route::group(['prefix' => 'gainings'], function(){
-    Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'GainingsController@getGainingsPaginate');
-    Route::get('/{lang?}/count', 'GainingsController@getCountGainings');
+    Route::get('/{lang?}', 'GainingsController@getGainings');
     Route::get('/{lang?}/{id}', 'GainingsController@getGain');
   });
 
   Route::group(['prefix' => 'intros'], function(){
     Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'IntrosController@getIntrosPaginate');
     Route::get('/{lang?}/count', 'IntrosController@getCountIntros');
-    Route::get('/{lang?}/{id}', 'IntrosController@getGain');
     Route::get('/dashboard/{lang?}', 'IntrosController@getIntrosDashBoard');
+    Route::post('{lang?}', 'IntrosController@addIntro');
   });
 
   // --CONTACTOS--
