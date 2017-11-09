@@ -137,6 +137,20 @@ class ContactsController extends Controller
         $count = $this->getCountMixedContacts($page,$find);
       }
       $data_user = $this->getDataUser();
+      $full_search='';
+      $full_search2='';
+      $pf = \DB::getTablePrefix();//PREFIJO CONFIGURADO EN DATABASE
+      $array_find = explode(' ',$find);
+      foreach ($array_find as $index =>$value) {
+        if(trim($array_find[$index]) !==''){
+          if($full_search!==''){
+            $full_search = $full_search.' or';
+            $full_search2 = $full_search2.' or';
+          }
+          $full_search = $full_search.' '.$pf.'users.first_name like "%'.$array_find[$index].'%" or '.$pf.'users.last_name like "%'.$array_find[$index].'%" or '.$pf.'users.email like "%'.$array_find[$index].'%" or '.$pf.'users.user_name like "%'.$array_find[$index].'%" ';
+          $full_search2 = $full_search2.' '.$pf.'contacts_pending.full_name like "%'.$array_find[$index].'%" or '.$pf.'contacts_pending.email like "%'.$array_find[$index].'%" ';
+        }
+      }
       if(!isset($data_user['id']))
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
 
@@ -146,8 +160,9 @@ class ContactsController extends Controller
       ->where('contacts_pending.status','!=',1);
 
       if(trim($find)!==''){
-        $contacts_pending->where(function($query) use($find){
-          $query->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+        $contacts_pending->where(function($query) use($full_search){
+          //$query->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+          $query->whereRaw($full_search);
         });
       }
 
@@ -156,8 +171,9 @@ class ContactsController extends Controller
       ->where('contacts_pending.id_user','=',$data_user['id']);
 
       if(trim($find)!==''){
-        $contacts_invited->where(function($query) use($find){
-          $query->where('contacts_pending.full_name','like','%'.$find.'%')->orWhere('contacts_pending.email','like','%'.$find.'%');
+        $contacts_invited->where(function($query) use($full_search2){
+          //$query->where('contacts_pending.full_name','like','%'.$find.'%')->orWhere('contacts_pending.email','like','%'.$find.'%');
+          $query->whereRaw($full_search2);
         });
       }
 
@@ -167,8 +183,9 @@ class ContactsController extends Controller
       ->where('users_friends.id_user','=',$data_user['id']);
 
       if(trim($find)!==''){
-        $query->where(function($query2) use($find){
-          $query2->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+        $query->where(function($query2) use($full_search){
+          //$query2->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+          $query2->whereRaw($full_search);
         });
       }
 
@@ -191,8 +208,9 @@ class ContactsController extends Controller
             $join->on('cp2.id_user', '=', 'users.id')
             ->where('cp2.email','=',$data_user['email']);
         })
-        ->where(function($query_join) use($find){
-          $query_join->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+        ->where(function($query_join) use($full_search){
+          //$query_join->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+          $query_join->whereRaw($full_search);
         })
         ->whereNull('users_friends.id')
         ->whereNull('cp1.id')
@@ -229,6 +247,7 @@ class ContactsController extends Controller
         $return['data']['contacts_invited_count'] = $count['contacts_invited'];
         $return['data']['user_friends_count'] = $count['user_friends'];
         $return['data']['users_not_contacts_count'] = $count['users_not_contacts'];
+        $return['data']['sql'] = $full_search;
       }
 
       return $return;
@@ -243,22 +262,38 @@ class ContactsController extends Controller
     public function getCountMixedContacts($page,$find){
       $data_user = $this->getDataUser();
       $query = \App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id_user','=',$data_user['id']);
-
       $query2 = ContactsPending::join('users','users.id','=','contacts_pending.id_user')->where('contacts_pending.email','=',$data_user['email']);
-
       $query3 = ContactsPending::where('contacts_pending.id_user','=',$data_user['id']);
+
+      $full_search='';
+      $full_search2='';
+      $pf = \DB::getTablePrefix();//PREFIJO CONFIGURADO EN DATABASE
+      $array_find = explode(' ',$find);
+      foreach ($array_find as $index =>$value) {
+        if(trim($array_find[$index]) !==''){
+          if($full_search!==''){
+            $full_search = $full_search.' or';
+            $full_search2 = $full_search2.' or';
+          }
+          $full_search = $full_search.' '.$pf.'users.first_name like "%'.$array_find[$index].'%" or '.$pf.'users.last_name like "%'.$array_find[$index].'%" or '.$pf.'users.email like "%'.$array_find[$index].'%" or '.$pf.'users.user_name like "%'.$array_find[$index].'%" ';
+          $full_search2 = $full_search2.' '.$pf.'contacts_pending.full_name like "%'.$array_find[$index].'%" or '.$pf.'contacts_pending.email like "%'.$array_find[$index].'%" ';
+        }
+      }
 
       $count_users=0;
       if(trim($find)!=='' && $page==1){
-        $query->where(function($query_internal) use($find){
-          $query_internal->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+        $query->where(function($query_internal) use($full_search){
+          //$query_internal->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+          $query_internal->whereRaw($full_search);
         });
-        $query2->where(function($query_internal) use($find){
-          $query_internal->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+        $query2->where(function($query_internal) use($full_search){
+          //$query_internal->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+          $query_internal->whereRaw($full_search);
         });
 
-        $query3->where(function($query_internal) use($find){
-          $query_internal->where('full_name','like','%'.$find.'%')->orWhere('email','like','%'.$find.'%');
+        $query3->where(function($query_internal) use($full_search2){
+          //$query_internal->where('full_name','like','%'.$find.'%')->orWhere('email','like','%'.$find.'%');
+          $query_internal->whereRaw($full_search2);
         });
         //los que no han sido invitados,  ni contactos y tampoco han invitado al usuario
         $count_users = \App\Models\Users::select('users.id')
@@ -274,8 +309,9 @@ class ContactsController extends Controller
             $join->on('cp2.id_user', '=', 'users.id')
             ->where('cp2.email','=',$data_user['email']);
         })
-        ->where(function($query_join) use($find){
-          $query_join->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+        ->where(function($query_join) use($full_search){
+          //$query_join->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
+          $query_join->whereRaw($full_search);
         })
         ->whereNull('users_friends.id')
         ->whereNull('cp1.id')
