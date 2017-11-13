@@ -222,9 +222,9 @@ class IntrosController extends Controller
       $validator = \Validator::make($inputs, [
         'friend_1' => 'required',
         'friend_2' => 'required',
-        'question_friend_1' => 'required|min:5',
-        'question_friend_2' => 'required|min:5',
-        'reason' => 'required|min:5'
+        'question_friend_1' => 'required|min:2',
+        'question_friend_2' => 'required|min:2',
+        'reason' => 'required|min:2'
       ]);
 
       if ($validator->fails()){
@@ -240,6 +240,18 @@ class IntrosController extends Controller
       $there_is_friend2=\App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id',$inputs['friend_2'])->first(['users.id','users.first_name','users.last_name','users.email']);
       if(!$there_is_friend2)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_2_not_exist'))]];
+
+      $there_is_contact=\App\Models\UsersFriends::where(function($query) use($there_is_friend2,$there_is_friend1){
+        $query->where(function($query2) use($there_is_friend2,$there_is_friend1){
+          $query2->where('id_user','=',$there_is_friend2['id'])
+          ->where('id_user_friend','=',$there_is_friend1['id']);
+        })->orWhere(function($query2) use($there_is_friend2,$there_is_friend1){
+          $query2->where('id_user','=',$there_is_friend1['id'])
+          ->where('id_user_friend','=',$there_is_friend2['id']);
+        });
+      })->first(['id']);
+      if($there_is_contact)
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.both_contacts'))]];
 
       $there_is_intros=Intros::where('id_user',$data_user['id'])->where(function($query) use($data_user,$inputs){
         $query->where(function($query2) use($data_user,$inputs){
@@ -292,7 +304,6 @@ class IntrosController extends Controller
       });
       if(count(\Mail::failures()) > 0)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
-
 
       $email_data['full_name']=$there_is_friend2['first_name'].' '.$there_is_friend2['last_name'];
       $email_data['email']=$there_is_friend2['email'];

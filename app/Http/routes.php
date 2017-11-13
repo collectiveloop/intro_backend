@@ -17,11 +17,10 @@ Route::get('invitations-link', 'ContactsController@redirectLink');
 Route::get('intros-link', 'IntrosController@redirectLink');
 Route::group(['prefix' => 'administration'], function(){
   Route::group(['middleware' => ['validate.admin_session']], function(){
-    Route::get('dashboard/{lang?}', 'AdministrationController@dashboard');
-    Route::get('remember/{lang?}/{token}', 'AdministrationController@remember');
+
   });
   Route::group(['middleware' => 'auth'], function() {
-    Route::match(['get', 'post'], 'login/{lang?}', 'AdministrationController@login' );
+
   });
 });
 
@@ -40,6 +39,7 @@ Route::group(['prefix' => 'user'], function(){
 Route::group(['middleware' => ['validate.session']], function(){
   Route::group(['prefix' => 'user'], function(){
     Route::get('{lang?}', 'UsersController@getUser');
+    Route::get('/{lang?}/basic', 'UsersController@getBasicUser');
     Route::put('{lang?}', 'UsersController@updateUser');
   });
   // --Login--
@@ -72,7 +72,7 @@ Route::group(['middleware' => ['validate.session']], function(){
   	Route::post('{lang?}', 'ContactsController@addContact');
     Route::put('{lang?}/accept/{id}', 'ContactsController@acceptInvitation');
     Route::put('{lang?}/reject/{id}', 'ContactsController@rejectInvitation');
-
+    Route::put('{lang?}/own-reject/{id}', 'ContactsController@rejectOwnInvitation');
 
     Route::put('{lang?}/{id}', 'ContactsController@updateContact');
   	Route::delete('{lang?}/{id}', 'ContactsController@deleteContact');

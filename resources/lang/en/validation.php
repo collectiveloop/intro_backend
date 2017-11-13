@@ -238,7 +238,10 @@ return [
       'intros_exists' =>'The contacts have been introduced previously',
       'invitation_email' => 'Contact Invitation in Intro App',
       'success_invitation_email' =>' has sent you an invitation to contact with ',
-      'success_invitation_final_email' =>' click on the following link to accept'
+      'success_invitation_final_email' =>' click on the following link to accept',
+      'both_contacts' =>' Both contacts have been introduced previously.',
+      'contact_not_found' => 'Contact not found',
+      'friend_found' => 'The Contact is linked to an intros, it can not be deleted'
     ],
 
     /*

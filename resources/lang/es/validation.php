@@ -238,7 +238,10 @@ return [
       'intros_exists' =>'Los contactos han sido presentados anteriormente',
       'invitation_email' => 'Invitación de contacto in Intro App',
       'success_invitation_email' =>' te ha enviado una invitación para que entres en contacto con ',
-      'success_invitation_final_email' =>' Haz clic sobre el siguiente enlace para aceptar la invitación'
+      'success_invitation_final_email' =>' Haz clic sobre el siguiente enlace para aceptar la invitación',
+      'both_contacts' =>' Los contactos seleccionados ya han sido introducidos previamente.',
+      'contact_not_found' =>' Contacto no encontrado',
+      'friend_found' => 'El contacto está vinculado a una introducción, no se puede eliminar'
     ],
     /*
     |--------------------------------------------------------------------------

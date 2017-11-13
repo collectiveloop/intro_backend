@@ -202,6 +202,27 @@ class UsersController extends Controller
     }
 
     /**
+    * Función que retorna la información más báasica del usuario actual
+    * @author Junior Milano <junior@sappitotech.com>
+    * @return array
+    * @memberof UsersController
+    */
+    public function getBasicUser(){
+      $data_user = $this->getDataUser();
+      // obtenemos la información del usuario autenticado
+      $user = Users::where('users.id',$data_user['id'])
+      ->first([
+        'users.id',
+        'users.first_name',
+        'users.last_name',
+        'users.email',
+        'users.image_profile'
+      ]);
+
+      return ['status'=>'success','data'=>['user' => $user->toArray()]];
+    }
+
+    /**
     * Función para retornar los datos del usuario en la sesión
     * @author Junior Milano <junior@sappitotech.com>
     * @return array
@@ -274,14 +295,14 @@ class UsersController extends Controller
         $images['email'] =$inputs['email'];
         $inputs['image_profile'] = $this->insertImageProfile($images);
       }
-      /*
+
       \Mail::send('emails.register_user', $email_data, function($message) use ($email_data) {
         $message->to($email_data['email']);
         $message->subject($email_data['register_send_email']);
       });
       if(count(\Mail::failures()) > 0)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
-          */
+
 
       $user = Users::create($inputs);
       try{
