@@ -60,6 +60,7 @@ class ContactsController extends Controller
       ->limit($quantity)
       ->offset(($page-1)*$quantity)
       ->where('users_friends.id_user','=',$data_user['id'])
+      ->where('users_friends.status','=',1)
       ->get([
         'users.id as id_user',
         'users_friends.id as id_user_friend',
@@ -84,7 +85,7 @@ class ContactsController extends Controller
       if(!isset($data_user['id']))
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
 
-      $count = UsersFriends::where('id_user','=',$data_user['id'])->count();
+      $count = UsersFriends::where('id_user','=',$data_user['id'])->where('status','=',1)->count();
 
       return ['status'=>'success','data'=>['contacts_count' => $count]];
     }
@@ -195,10 +196,10 @@ class ContactsController extends Controller
         });
       }
 
-      // obtenemos la información del usuario autenticado
       $query = UsersFriends::select(\DB::raw('"users_friends" as type_query'), 'users_friends.id as id','users.id as id_user','users.first_name','users.last_name','users.email','users.image_profile',\DB::raw('"false" as status'), 'users.created_at as created_at', 'users.updated_at as updated_at')
       ->join('users','users.id','=','users_friends.id_user_friend')
-      ->where('users_friends.id_user','=',$data_user['id']);
+      ->where('users_friends.id_user','=',$data_user['id'])
+      ->where('users_friends.status','=',1);
 
       if(trim($find)!==''){
         $query->where(function($query2) use($full_search){
@@ -215,7 +216,8 @@ class ContactsController extends Controller
         $count_users = \App\Models\Users::select(\DB::raw('"users_not_contacts" as type_query'), 'users.id as id','users.id as id_user','users.first_name','users.last_name','users.email','users.image_profile',\DB::raw('"false" as status'), 'users.created_at as created_at', 'users.updated_at as updated_at')
         ->leftJoin('users_friends', function($join) use($data_user,$find){
             $join->on('users_friends.id_user_friend', '=', 'users.id')
-            ->where('users_friends.id_user','=',$data_user['id']);
+            ->where('users_friends.id_user','=',$data_user['id'])
+            ->where('users_friends.status','=',1);
         })
         ->leftJoin('contacts_pending as cp1', function($join) use($data_user,$find){//los que yo invite
             $join->on('cp1.email', '=', 'users.email')
@@ -282,7 +284,7 @@ class ContactsController extends Controller
       if(!isset($data_user['id']))
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
 
-      $query = UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id_user','=',$data_user['id']);
+      $query = UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id_user','=',$data_user['id'])->where('users_friends.status','=',1);
       $query2 = ContactsPending::join('users','users.id','=','contacts_pending.id_user')->where('contacts_pending.email','=',$data_user['email'])->where('contacts_pending.status','=',0);
       $query3 = ContactsPending::where('contacts_pending.id_user','=',$data_user['id'])->where('contacts_pending.status','=',0);
 
@@ -320,7 +322,8 @@ class ContactsController extends Controller
         $count_users = \App\Models\Users::select('users.id')
         ->leftJoin('users_friends', function($join) use($data_user,$find){
             $join->on('users_friends.id_user_friend', '=', 'users.id')
-            ->where('users_friends.id_user','=',$data_user['id']);
+            ->where('users_friends.id_user','=',$data_user['id'])
+            ->where('users_friends.status','=',1);
         })
         ->leftJoin('contacts_pending as cp1', function($join) use($data_user,$find){
             $join->on('cp1.email', '=', 'users.email')
@@ -382,14 +385,14 @@ class ContactsController extends Controller
           return ['status'=>'error','data'=>['status'=>$contact->status,'message'=>htmlentities(\Lang::get('validation.messages.invitation_rejected_invalid'))]];
       }
 
-      $contact_exist = UsersFriends::where('id_user','=',$data_user['id'])->where('id_user_friend','=',$contact->id_user)->first(['id']);
+      $contact_exist = UsersFriends::where('id_user','=',$data_user['id'])->where('id_user_friend','=',$contact->id_user)->where('status','=',1)->first(['id']);
       if($contact_exist)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.is_contact'))]];
       $contact->status = 1;
       $contact->save();
       //ahora lo guardamos como contacto
-      UsersFriends::create(['id_user'=>$data_user['id'], 'id_user_friend'=>$contact->id_user]);
-      UsersFriends::create(['id_user'=>$contact->id_user, 'id_user_friend'=>$data_user['id']]);
+      UsersFriends::create(['id_user'=>$data_user['id'], 'id_user_friend'=>$contact->id_user,'status'=>1]);
+      UsersFriends::create(['id_user'=>$contact->id_user, 'id_user_friend'=>$data_user['id'],'status'=>1]);
 
       return ['status'=>'success','data'=>[ 'message'=>htmlentities(\Lang::get('validation.messages.success_update')) ] ];
     }
@@ -555,7 +558,7 @@ class ContactsController extends Controller
         $join->where('users.email','=',trim($inputs['email']))
             ->on('users.id','=','users_friends.id_user_friend');
       })
-      ->where('users_friends.id_user','=',$data_user['id'])->first();
+      ->where('users_friends.id_user','=',$data_user['id'])->where('users_friends.status','=',1)->first();
 
       if($user_friend)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.is_contact'))]];
@@ -629,15 +632,11 @@ class ContactsController extends Controller
       if(!$delete)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.contact_not_found'))]];
 
-      $intro_founded = \App\Models\Intros::where('id_friend_1','=',$id)->orWhere('id_friend_2','=',$id)->first(['id']);
-      if($intro_founded)
-        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.friend_found'))]];
-
       $delete2 = UsersFriends::where('id_user','=',$delete->id_user_friend)->where('id_user_friend','=',$data_user['id'])->first(['id']);
       if($delete2)
-        $delete2->delete();
+        $delete2->update(['status'=>0]);
 
-      $delete->delete();
+      $delete->update(['status'=>0]);
       return ['status'=>'success','data'=>['message'=>htmlentities(\Lang::get('validation.messages.success_delete'))]];
     }
 

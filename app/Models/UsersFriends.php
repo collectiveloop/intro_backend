@@ -16,7 +16,7 @@ class UsersFriends extends Model{
      *
      * @var array
      */
-    protected $fillable = ['id_user','id_user_friend','friend_info','created_at','updated_at'];
+    protected $fillable = ['id_user','id_user_friend','friend_info','status','created_at','updated_at'];
 
     /**
      * The attributes excluded from the model's JSON form.

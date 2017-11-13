@@ -55,12 +55,14 @@ class IntrosController extends Controller
       $made = Intros::where('intros.id_user',$data_user['id'])
       ->join('users_friends as user_friend_1', function ($join) {
         $join->on('user_friend_1.id','=','intros.id_friend_1')
-        ->on('user_friend_1.id_user', '=', 'intros.id_user');
+        ->on('user_friend_1.id_user', '=', 'intros.id_user')
+        ->where('user_friend_1.status', '=', 1);
       })
       ->join('users as friend_1','user_friend_1.id_user_friend','=','friend_1.id')
       ->join('users_friends as user_friend_2', function ($join) {
         $join->on('user_friend_2.id','=','intros.id_friend_2')
-        ->on('user_friend_2.id_user', '=', 'intros.id_user');
+        ->on('user_friend_2.id_user', '=', 'intros.id_user')
+        ->where('user_friend_2.status', '=', 1);
       })
       ->join('users as friend_2','user_friend_2.id_user_friend','=','friend_2.id')
       ->orderBy('intros.created_at', 'desc')
@@ -82,12 +84,14 @@ class IntrosController extends Controller
       $count_made = Intros::where('intros.id_user',$data_user['id'])
       ->join('users_friends as user_friend_1', function ($join) {
         $join->on('user_friend_1.id','=','intros.id_friend_1')
-        ->on('user_friend_1.id_user', '=', 'intros.id_user');
+        ->on('user_friend_1.id_user', '=', 'intros.id_user')
+        ->where('user_friend_1.status', '=', 1);
       })
       ->join('users as friend_1','user_friend_1.id_user_friend','=','friend_1.id')
       ->join('users_friends as user_friend_2', function ($join) {
         $join->on('user_friend_2.id','=','intros.id_friend_2')
-        ->on('user_friend_2.id_user', '=', 'intros.id_user');
+        ->on('user_friend_2.id_user', '=', 'intros.id_user')
+        ->where('user_friend_2.status', '=', 1);
       })
       ->count();
 
@@ -109,7 +113,9 @@ class IntrosController extends Controller
         $join->orOn('user_friend_2.id_user', '=','intros.id_user');
       })
       ->join('users as friend_2','friend_2.id','=','user_friend_2.id_user_friend')
-
+      ->where('owner_user_friend.status', '=', 1)
+      ->where('user_friend_1.status', '=', 1)
+      ->where('user_friend_2.status', '=', 1)
       ->where('users.id', '=', $data_user['id'])
       ->orderBy('intros.created_at', 'desc')
       ->orderBy('intros.updated_at', 'desc')
@@ -134,6 +140,7 @@ class IntrosController extends Controller
         $join->on('users_friends.id', '=','intros.id_friend_1');
         $join->orOn('users_friends.id', '=','intros.id_friend_2');
       })
+      ->where('users_friends.status', '=', 1)
       ->where('users.id', '=', $data_user['id'])
       ->count(['intros.id']);
 
@@ -233,11 +240,11 @@ class IntrosController extends Controller
       }
 
       //validamos que el correo sea unico
-      $there_is_friend1=\App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id',$inputs['friend_1'])->first(['users.id','users.first_name','users.last_name','users.email']);
+      $there_is_friend1=\App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id',$inputs['friend_1'])->where('users_friends.status',1)->first(['users.id','users.first_name','users.last_name','users.email']);
       if(!$there_is_friend1)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_1_not_exist'))]];
 
-      $there_is_friend2=\App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id',$inputs['friend_2'])->first(['users.id','users.first_name','users.last_name','users.email']);
+      $there_is_friend2=\App\Models\UsersFriends::join('users','users.id','=','users_friends.id_user_friend')->where('users_friends.id',$inputs['friend_2'])->where('users_friends.status',1)->first(['users.id','users.first_name','users.last_name','users.email']);
       if(!$there_is_friend2)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_2_not_exist'))]];
 
@@ -249,7 +256,7 @@ class IntrosController extends Controller
           $query2->where('id_user','=',$there_is_friend1['id'])
           ->where('id_user_friend','=',$there_is_friend2['id']);
         });
-      })->first(['id']);
+      })->where('status',1)->first(['id']);
       if($there_is_contact)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.both_contacts'))]];
 
