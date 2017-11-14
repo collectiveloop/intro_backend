@@ -209,7 +209,7 @@ return [
       'your_information_email' => 'Estos son sus datos',
       'regards_email' => 'Saludos',
       'user_email' => 'Usuario',
-      'email_email' => 'Correo',
+      'email_label' => 'Correo',
       'password_email' => 'Clave',
       'password_not_match' => 'La clave indicada no coincide con su clave actual',
       'number_phones_email' => 'Números telefónicos',

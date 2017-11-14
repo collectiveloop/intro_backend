@@ -285,7 +285,7 @@ class UsersController extends Controller
       $email_data['dear_email']=htmlentities(\Lang::get('validation.messages.dear_email'));
       $email_data['success_register_email']=htmlentities(\Lang::get('validation.messages.success_register_email'));
       $email_data['your_information_email']=htmlentities(\Lang::get('validation.messages.your_information_email'));
-      $email_data['email_email']=htmlentities(\Lang::get('validation.messages.email_email'));
+      $email_data['email_label']=htmlentities(\Lang::get('validation.messages.email_email'));
       $email_data['password_email']=htmlentities(\Lang::get('validation.messages.password_email'));
       $email_data['regards_email']=htmlentities(\Lang::get('validation.messages.regards_email'));
       $email_data['register_send_email']=htmlentities(\Lang::get('validation.messages.register_send_email'));

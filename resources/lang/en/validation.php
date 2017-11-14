@@ -209,7 +209,7 @@ return [
       'your_information_email' => 'Your information',
       'regards_email' => 'Regards',
       'user_email' => 'User',
-      'email_email' => 'Email',
+      'email_label' => 'Email',
       'password_email' => 'Password',
       'password_not_match' => 'Old password not match with your current password',
       'number_phones_email' => 'Number Phones',

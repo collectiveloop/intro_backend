@@ -55,14 +55,12 @@ class IntrosController extends Controller
       $made = Intros::where('intros.id_user',$data_user['id'])
       ->join('users_friends as user_friend_1', function ($join) {
         $join->on('user_friend_1.id','=','intros.id_friend_1')
-        ->on('user_friend_1.id_user', '=', 'intros.id_user')
-        ->where('user_friend_1.status', '=', 1);
+        ->on('user_friend_1.id_user', '=', 'intros.id_user');
       })
       ->join('users as friend_1','user_friend_1.id_user_friend','=','friend_1.id')
       ->join('users_friends as user_friend_2', function ($join) {
         $join->on('user_friend_2.id','=','intros.id_friend_2')
-        ->on('user_friend_2.id_user', '=', 'intros.id_user')
-        ->where('user_friend_2.status', '=', 1);
+        ->on('user_friend_2.id_user', '=', 'intros.id_user');
       })
       ->join('users as friend_2','user_friend_2.id_user_friend','=','friend_2.id')
       ->orderBy('intros.created_at', 'desc')
@@ -84,14 +82,12 @@ class IntrosController extends Controller
       $count_made = Intros::where('intros.id_user',$data_user['id'])
       ->join('users_friends as user_friend_1', function ($join) {
         $join->on('user_friend_1.id','=','intros.id_friend_1')
-        ->on('user_friend_1.id_user', '=', 'intros.id_user')
-        ->where('user_friend_1.status', '=', 1);
+        ->on('user_friend_1.id_user', '=', 'intros.id_user');
       })
       ->join('users as friend_1','user_friend_1.id_user_friend','=','friend_1.id')
       ->join('users_friends as user_friend_2', function ($join) {
         $join->on('user_friend_2.id','=','intros.id_friend_2')
-        ->on('user_friend_2.id_user', '=', 'intros.id_user')
-        ->where('user_friend_2.status', '=', 1);
+        ->on('user_friend_2.id_user', '=', 'intros.id_user');
       })
       ->count();
 
@@ -113,9 +109,6 @@ class IntrosController extends Controller
         $join->orOn('user_friend_2.id_user', '=','intros.id_user');
       })
       ->join('users as friend_2','friend_2.id','=','user_friend_2.id_user_friend')
-      ->where('owner_user_friend.status', '=', 1)
-      ->where('user_friend_1.status', '=', 1)
-      ->where('user_friend_2.status', '=', 1)
       ->where('users.id', '=', $data_user['id'])
       ->orderBy('intros.created_at', 'desc')
       ->orderBy('intros.updated_at', 'desc')
@@ -157,7 +150,7 @@ class IntrosController extends Controller
           'id' =>$received['id'],
           'reason' =>$received['reason']
         ];
-        //retorno los datos de la perosna que no es el usuario que se está consultando, porque es con quien lo están presentando
+        //retorno los datos de la persona que no es el usuario que se está consultando, porque es con quien lo están presentando
         if($data_user['id']===$received['id_user_1']){
           $result['received']['id_user'] = $received['id_friend_2'];
           $result['received']['friend_image_profile'] = $received['friend_2_image_profile'];
@@ -304,14 +297,14 @@ class IntrosController extends Controller
       $email_data['accept_invitation_link']=htmlentities(\Lang::get('validation.messages.accept_invitation'));
       $email_data['regards_email']=htmlentities(\Lang::get('validation.messages.regards_email'));
       $email_data['invitation_email']=htmlentities(\Lang::get('validation.messages.invitation_email'));
-
+/*
       \Mail::send('emails.invitation', $email_data, function($message) use ($email_data) {
         $message->to($email_data['email']);
         $message->subject($email_data['invitation_email']);
       });
       if(count(\Mail::failures()) > 0)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
-
+*/
       $email_data['full_name']=$there_is_friend2['first_name'].' '.$there_is_friend2['last_name'];
       $email_data['email']=$there_is_friend2['email'];
       $email_data['contact_name']=$data_user['first_name'].' '.$data_user['last_name'];
@@ -322,14 +315,14 @@ class IntrosController extends Controller
       $email_data['accept_invitation_link']=htmlentities(\Lang::get('validation.messages.accept_invitation'));
       $email_data['regards_email']=htmlentities(\Lang::get('validation.messages.regards_email'));
       $email_data['invitation_email']=htmlentities(\Lang::get('validation.messages.invitation_email'));
-
+/*
       \Mail::send('emails.invitation', $email_data, function($message) use ($email_data) {
         $message->to($email_data['email']);
         $message->subject($email_data['invitation_email']);
       });
       if(count(\Mail::failures()) > 0)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
-
+*/
       return ['status'=>'success','data'=>['message'=>htmlentities(\Lang::get('validation.messages.success_register'))]];
     }
 
