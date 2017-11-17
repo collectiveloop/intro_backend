@@ -168,43 +168,6 @@ class IntrosController extends Controller
     }
 
     /**
-    * Función que retorna la información los intros de forma paginada
-    * @author Junior Milano <junior@sappitotech.com>
-    * @return array
-    * @memberof IntrosController
-    */
-    public function getIntrosPaginate($lang,$page,$quantity){
-      //datos del usuario
-      $data_user = $this->getDataUser();
-      if(!isset($data_user['id']))
-        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
-
-      $intros = Intros::where('intros.id_user',$data_user['id'])
-      ->join('users as friend_1','friend_1.id','=','intros.id_friend_1')
-      ->join('users as friend_2','friend_2.id','=','intros.id_friend_2')
-      ->orderBy('intros.created_at', 'desc')
-      ->orderBy('intros.updated_at', 'desc')
-      ->limit($quantity)
-      ->offset(($page-1)*$quantity)
-      ->get([
-        'intros.id',
-        'intros.id_friend_1',
-        'friend_1.first_name as friend_1_first_name',
-        'friend_1.last_name as friend_1_last_name',
-        'intros.id_friend_2',
-        'friend_2.first_name as friend_2_first_name',
-        'friend_2.last_name as friend_2_last_name',
-        'intros.reason',
-        'intros.friend_1_info',
-        'intros.friend_2_info',
-        'intros.created_at',
-        'intros.updated_at'
-      ]);
-
-      return ['status'=>'success','data'=>['intros' => $intros->toArray()]];
-    }
-
-    /**
     * Función para insertar los intros de un usuario
     * @author Junior Milano <junior@sappitotech.com>
     * @return array
@@ -286,6 +249,14 @@ class IntrosController extends Controller
       if(count($insert)>0)
         \App\Models\GainingsIntros::insert($insert);
 
+      //creamos el chat
+      $room=\App\Models\Rooms::create([
+        'id_intro'=>$new_intro['id'],
+        'id_user_1'=>$data_user['id'],
+        'id_user_2'=>$there_is_friend1['id'],
+        'id_user_3'=>$there_is_friend2['id'],
+      ]);
+
       $email_data = [];
       $email_data['full_name']=$there_is_friend1['first_name'].' '.$there_is_friend1['last_name'];
       $email_data['email']=$there_is_friend1['email'];
@@ -339,20 +310,4 @@ class IntrosController extends Controller
       return view('redirect', ['url'=>$domain.'/intros','token' =>'']);
     }
 
-    /**
-    * Función que retorna la cantidad de intros registradas en bd
-    * @author Junior Milano <junior@sappitotech.com>
-    * @return array
-    * @memberof IntrosController
-    */
-    public function getCountIntros($lang){
-      //datos del usuario
-      $data_user = $this->getDataUser();
-      if(!isset($data_user['id']))
-        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
-
-      $count = Intros::where('id_user',$data_user['id'])->count();
-
-      return ['status'=>'success','data'=>['intros_count' => $count]];
-    }
 }

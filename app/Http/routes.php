@@ -53,13 +53,6 @@ Route::group(['middleware' => ['validate.session']], function(){
     Route::get('/{lang?}/{id}', 'GainingsController@getGain');
   });
 
-  Route::group(['prefix' => 'intros'], function(){
-    Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'IntrosController@getIntrosPaginate');
-    Route::get('/{lang?}/count', 'IntrosController@getCountIntros');
-    Route::get('/dashboard/{lang?}', 'IntrosController@getIntrosDashBoard');
-    Route::post('{lang?}', 'IntrosController@addIntro');
-  });
-
   // --CONTACTOS--
   Route::group(['prefix' => 'contacts'], function ($app) {
     Route::get('/{lang?}/page/{page}/quantity/{quantity}', 'ContactsController@getContactsPaginate');
@@ -69,12 +62,28 @@ Route::group(['middleware' => ['validate.session']], function(){
     Route::get('/{lang?}/search/page/{page}/quantity/{quantity}/{find?}', 'ContactsController@getContactsMixedPaginate');
     Route::get('/{lang?}/{id}', 'ContactsController@getContact');
     Route::get('/{lang?}/find/{email}', 'ContactsController@findContact');
-  	Route::post('{lang?}', 'ContactsController@addContact');
+    Route::post('{lang?}', 'ContactsController@addContact');
     Route::put('{lang?}/accept/{id}', 'ContactsController@acceptInvitation');
     Route::put('{lang?}/reject/{id}', 'ContactsController@rejectInvitation');
     Route::put('{lang?}/own-reject/{id}', 'ContactsController@rejectOwnInvitation');
 
     Route::put('{lang?}/{id}', 'ContactsController@updateContact');
-  	Route::delete('{lang?}/{id}', 'ContactsController@deleteContact');
+    Route::delete('{lang?}/{id}', 'ContactsController@deleteContact');
   });
+
+  Route::group(['prefix' => 'intros'], function(){
+    Route::get('/dashboard/{lang?}', 'IntrosController@getIntrosDashBoard');
+    Route::post('{lang?}', 'IntrosController@addIntro');
+    Route::get('{lang?}/{id}', 'ListIntrosController@getDetailIntro');
+    Route::get('/{lang?}/made/page/{page}/quantity/{quantity}', 'ListIntrosController@getMadeIntrosPaginate');
+    Route::get('/{lang?}/made/count', 'ListIntrosController@getCountMadeIntros');
+    Route::get('/{lang?}/received/page/{page}/quantity/{quantity}', 'ListIntrosController@getReceivedIntrosPaginate');
+    Route::get('/{lang?}/received/count', 'ListIntrosController@getCountReceivedIntros');
+  });
+
+  Route::group(['prefix' => 'messages'], function(){
+    Route::get('/{lang?}/received/page/{page}/quantity/{quantity}', 'MessagesController@getReceivedMembersPaginate');
+    Route::get('/{lang?}/received/count', 'MessagesController@getCountReceivedMembers');
+  });
+
 });
