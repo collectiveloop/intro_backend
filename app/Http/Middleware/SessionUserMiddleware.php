@@ -28,6 +28,9 @@ class SessionUserMiddleware extends JsonResponse {
         else
             $response = $next($request);
 
+      //$temp = json_decode($response->content);
+      //$temp->data=$validation;
+      //$response->content = json_encode($temp);
         return $response;
     }
 

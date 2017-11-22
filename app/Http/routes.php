@@ -10,19 +10,10 @@
 | and give it the controller to call when that URI is requested.
 |
 */
-
 Route::pattern('id', '[0-9]+');
 Route::get('remember-link/{token}', 'UsersController@redirectLink');
 Route::get('invitations-link', 'ContactsController@redirectLink');
 Route::get('intros-link', 'IntrosController@redirectLink');
-Route::group(['prefix' => 'administration'], function(){
-  Route::group(['middleware' => ['validate.admin_session']], function(){
-
-  });
-  Route::group(['middleware' => 'auth'], function() {
-
-  });
-});
 
 Route::group(['prefix' => 'login'], function(){
   Route::post('authenticate/{lang?}', 'UsersController@authenticate');
@@ -82,8 +73,9 @@ Route::group(['middleware' => ['validate.session']], function(){
   });
 
   Route::group(['prefix' => 'messages'], function(){
-    Route::get('/{lang?}/received/page/{page}/quantity/{quantity}', 'MessagesController@getReceivedMembersPaginate');
-    Route::get('/{lang?}/received/count', 'MessagesController@getCountReceivedMembers');
+    Route::get('/{lang?}/{intro}/quantity/{quantity}/room/{room}/{last_message?}', 'MessagesController@getOldMessages');//entrando
+    Route::get('/{lang?}/{intro}/news/room/{room}/{last_message?}', 'MessagesController@getNewMessages');//mas
+    Route::post('{lang?}/{room}/{intro}/{last_message?}', 'MessagesController@addMessage');
   });
 
 });

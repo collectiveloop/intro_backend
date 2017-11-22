@@ -241,7 +241,9 @@ return [
       'success_invitation_final_email' =>' Haz clic sobre el siguiente enlace para aceptar la invitación',
       'both_contacts' =>' Los contactos seleccionados ya han sido introducidos previamente.',
       'contact_not_found' =>' Contacto no encontrado',
-      'friend_found' => 'El contacto está vinculado a una introducción, no se puede eliminar'
+      'friend_found' => 'El contacto está vinculado a una introducción, no se puede eliminar',
+      'not_access_chat' => 'Yo do not have permission to access this chat',
+      'not_room' => 'Room not found'
     ],
     /*
     |--------------------------------------------------------------------------

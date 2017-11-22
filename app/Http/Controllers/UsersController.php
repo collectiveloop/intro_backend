@@ -42,7 +42,7 @@ class UsersController extends Controller
       if(trim($lang)!=='' )
         \App::setLocale($lang);
 
-      $inputs = $request->only('email', 'password');
+      $inputs = $request->only('email', 'password','push_id');
       $validator = Validator::make($inputs, [
         'email' => 'required|min:5',
         'password' => 'required|min:8|max:15',
@@ -60,7 +60,10 @@ class UsersController extends Controller
         if(isset($verification->external_id) && trim($verification->external_id)===''){
           try{
             //verificamos las credenciales y retornamos un error de no poderse autenticar
-            $token = JWTAuth::attempt($inputs);
+            $token = JWTAuth::attempt([
+              'email' => $inputs['email'],
+              'password' => $inputs['password'],
+            ]);
             if (!$token){
               $token = JWTAuth::attempt([
                 'user_name' => $inputs['email'],
@@ -78,12 +81,14 @@ class UsersController extends Controller
           if(isset($verification->platform) && trim($verification->platform)!=='')
             return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.login_by_external_'.$verification->platform))]];
           else
-            return ['status'=>'error','data'=>['fff'=>'2222222222222','message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
+            return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
         }
       }else{
         // Hubo un error
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
       }
+      if(isset($inputs['push_id']) && trim($inputs['push_id'])!=='')
+        Users::where('id','=',$verification->id)->update(['push_id'=>$inputs['push_id']]);
 
       // if no errors are encountered we can return a JWT
       return ['status'=>'success-token','data'=>compact('token')];
@@ -129,6 +134,10 @@ class UsersController extends Controller
     * @memberof UsersController
     */
     public function closeSession(){
+      //quitamos el push_id del usuario
+      $data_user = $this->getDataUser();
+      if(isset($data_user['id']))
+        Users::where('id','=',$data_user['id'])->update(['push_id'=>'']);
       // obtenemos el token del usuario autenticado, si lo está
       $token = $this->getAuthenticationToken();
       if ($token)
@@ -155,6 +164,7 @@ class UsersController extends Controller
         'users.last_name',
         'users.user_name',
         'users.email',
+        'users.push_id',
         'users.external_id',
         'users.job_title',
         'users.image_profile'
@@ -191,6 +201,7 @@ class UsersController extends Controller
         'users.first_name',
         'users.last_name',
         'users.email',
+        'users.push_id',
         'users.external_id',
         'users.job_title',
         'users.job_description',
@@ -215,6 +226,7 @@ class UsersController extends Controller
         'users.id',
         'users.first_name',
         'users.last_name',
+        'users.push_id',
         'users.email',
         'users.image_profile'
       ]);
@@ -254,7 +266,8 @@ class UsersController extends Controller
         'job_title' => 'sometimes|min:3',
         'job_description' => 'sometimes|min:3',
         'company_name' => 'sometimes|min:3',
-        'password' => 'required|min:8|max:15'
+        'password' => 'required|min:8|max:15',
+        'push_id' => 'sometimes|min:3'
       ]);
       //'password' => 'required|min:8|regex:/^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[\d\X])(?=.*[!$#%]).*$/'
 
@@ -295,14 +308,14 @@ class UsersController extends Controller
         $images['email'] =$inputs['email'];
         $inputs['image_profile'] = $this->insertImageProfile($images);
       }
-
+/*
       \Mail::send('emails.register_user', $email_data, function($message) use ($email_data) {
         $message->to($email_data['email']);
         $message->subject($email_data['register_send_email']);
       });
       if(count(\Mail::failures()) > 0)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
-
+*/
 
       $user = Users::create($inputs);
       try{
@@ -315,6 +328,8 @@ class UsersController extends Controller
         // Hubo un error
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.register_session_impossible'))]];
       }
+      if(isset($inputs['push_id']) && trim($inputs['push_id'])!=='')
+        Users::where('id','=',$user->id)->update(['push_id'=>$inputs['push_id']]);
 
       return ['status'=>'success','data'=>['message'=>htmlentities(\Lang::get('validation.messages.success_register')),'user_id'=>$user->id,'token'=>$token]];
     }
@@ -331,13 +346,16 @@ class UsersController extends Controller
 
       $inputs = Input::all();
       //validamos que el correo sea unico
-      $there_is_user=Users::where('email',$inputs['email'])->first(['platform','external_id']);
+      $there_is_user=Users::where('email',$inputs['email'])->first(['id','platform','external_id']);
       $token;
+      $user_push_id = '';
       $platform =$there_is_user['platform'];
       $created = false;
       if($there_is_user){
         if(trim($there_is_user->external_id)==='')
           return ['status'=>'error','data'=>['type'=>'external_login', 'message'=>htmlentities(\Lang::get('validation.messages.not_external_login'))]];
+
+        $user_push_id = $there_is_user->id;
       }else{
         $inputs['password']= \Hash::make($inputs['email'].$inputs['platform']);
         //lo registramos
@@ -350,7 +368,8 @@ class UsersController extends Controller
           'job_title' => 'sometimes|min:3',
           'job_description' => 'sometimes|min:3',
           'company_name' => 'sometimes|min:3',
-          'platform' => 'sometimes|min:1'
+          'platform' => 'sometimes|min:1',
+          'push_id' => 'sometimes|min:3'
         ]);
 
         if ($validator->fails()){
@@ -360,6 +379,7 @@ class UsersController extends Controller
         $platform = $inputs['platform'];
         $user = Users::create($inputs);
         $created = true;
+        $user_push_id = $user->id;
       }
       if($platform===$inputs['platform']){
         try{
@@ -375,6 +395,8 @@ class UsersController extends Controller
       }else{
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.login_by_external_'.$there_is_user->platform))]];
       }
+      if(isset($inputs['push_id']) && trim($inputs['push_id'])!=='')
+        Users::where('id','=',$user_push_id)->update(['push_id'=>$inputs['push_id']]);
 
       return ['status'=>'success-token','data'=>['token'=>compact('token'),'created'=>$created,'message'=>htmlentities(\Lang::get('validation.messages.success_register'))]];
     }
@@ -562,7 +584,8 @@ class UsersController extends Controller
         'user_name' => 'required|min:5',
         'job_title' => 'sometimes|min:3',
         'job_description' => 'sometimes|min:3',
-        'company_name' => 'sometimes|min:3'
+        'company_name' => 'sometimes|min:3',
+        'push_id' => 'sometimes|min:3'
       ]);
 
       if ($validator->fails()){
@@ -613,17 +636,17 @@ class UsersController extends Controller
             if($file && $file!=='' && $file!=='undefined'){
               $extension = strtolower($file->guessClientExtension());
                 if($extension!=='jpg' && $extension!=='jpeg' && $extension!=='png'){
-                    return response()->json(['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.image_invalid_format'))]], ResponseHelper::getTypeResponse('error'), ['content-type'=>ResponseHelper::getCodification()] );
+                  return response()->json(['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.image_invalid_format'))]], ResponseHelper::getTypeResponse('error'), ['content-type'=>ResponseHelper::getCodification()] );
                 }else {
-                    if(isset($inputs['old_image_profile']) && $inputs['old_image_profile']!==''){
-                      $storage=\Illuminate\Support\Facades\Storage::disk('profiles');
-                      $storage->delete(($inputs['old_image_profile']));
-                    }
-                    $find = array(' ','_','ñ','á','é','í','ó','ú','-');
-                    $replace = array('','','','','','','','');
-                    $new_name=str_replace($find,$replace,$inputs['email'].$photoDate->format('YmdHis').'.'.$extension);
-                    $file->move(base_path('/public/images/profiles'),$new_name);
-                    $name=$new_name;
+                  if(isset($inputs['old_image_profile']) && $inputs['old_image_profile']!==''){
+                    $storage=\Illuminate\Support\Facades\Storage::disk('profiles');
+                    $storage->delete(($inputs['old_image_profile']));
+                  }
+                  $find = array(' ','_','ñ','á','é','í','ó','ú','-');
+                  $replace = array('','','','','','','','');
+                  $new_name=str_replace($find,$replace,$inputs['email'].$photoDate->format('YmdHis').'.'.$extension);
+                  $file->move(base_path('/public/images/profiles'),$new_name);
+                  $name=$new_name;
                 }
             }
         }

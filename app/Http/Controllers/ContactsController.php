@@ -68,6 +68,7 @@ class ContactsController extends Controller
         'users.last_name',
         'users.user_name',
         'users.email',
+        'users.push_id',
         'users.image_profile'
       ]);
 
@@ -117,6 +118,7 @@ class ContactsController extends Controller
         'users.first_name',
         'users.last_name',
         'users.email',
+        'users.push_id',
         'users.image_profile'
       ]);
 
