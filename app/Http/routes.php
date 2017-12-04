@@ -11,7 +11,9 @@
 |
 */
 Route::pattern('id', '[0-9]+');
-Route::get('remember-link/{token}', 'UsersController@redirectLink');
+
+Route::get('remember-link/{token}', 'UsersController@rememberPassword');
+Route::post('remember-link/{token}', 'UsersController@rememberPassword');
 Route::get('invitations-link', 'ContactsController@redirectLink');
 Route::get('intros-link', 'IntrosController@redirectLink');
 
@@ -27,6 +29,8 @@ Route::group(['prefix' => 'user'], function(){
   Route::post('change-password/{lang}', 'UsersController@changePassword');
 });
 
+Route::get('token', 'UsersController@getToken');
+
 Route::group(['middleware' => ['validate.session']], function(){
   Route::group(['prefix' => 'user'], function(){
     Route::get('{lang?}', 'UsersController@getUser');
@@ -36,7 +40,6 @@ Route::group(['middleware' => ['validate.session']], function(){
   // --Login--
   Route::group(['prefix' => 'login'], function(){
     Route::get('logout', 'UsersController@closeSession');
-    Route::get('token', 'UsersController@getToken');
   });
 
   Route::group(['prefix' => 'gainings'], function(){
@@ -53,7 +56,7 @@ Route::group(['middleware' => ['validate.session']], function(){
     Route::get('/{lang?}/search/page/{page}/quantity/{quantity}/{find?}', 'ContactsController@getContactsMixedPaginate');
     Route::get('/{lang?}/{id}', 'ContactsController@getContact');
     Route::get('/{lang?}/find/{email}', 'ContactsController@findContact');
-    Route::post('{lang?}', 'ContactsController@addContact');
+    Route::post('{lang?}/invited/{invited?}', 'ContactsController@addContact');
     Route::put('{lang?}/accept/{id}', 'ContactsController@acceptInvitation');
     Route::put('{lang?}/reject/{id}', 'ContactsController@rejectInvitation');
     Route::put('{lang?}/own-reject/{id}', 'ContactsController@rejectOwnInvitation');
@@ -73,9 +76,19 @@ Route::group(['middleware' => ['validate.session']], function(){
   });
 
   Route::group(['prefix' => 'messages'], function(){
-    Route::get('/{lang?}/{intro}/quantity/{quantity}/room/{room}/{last_message?}', 'MessagesController@getOldMessages');//entrando
-    Route::get('/{lang?}/{intro}/news/room/{room}/{last_message?}', 'MessagesController@getNewMessages');//mas
+    Route::get('/{lang?}/{intro}/quantity/{quantity}/room/{room}/{last_message?}', 'MessagesController@getOldMessages');
+    Route::get('/{lang?}/{intro}/news/room/{room}/{last_message?}', 'MessagesController@getNewMessages');
     Route::post('{lang?}/{room}/{intro}/{last_message?}', 'MessagesController@addMessage');
+    Route::delete('/{lang?}/leave/{intro}', 'MessagesController@leaveRoom');
+
+    Route::get('/{lang?}/made/page/{page}/quantity/{quantity}', 'MessagesController@getMadeIntrosPaginate');
+    Route::get('/{lang?}/made/count', 'MessagesController@getCountMadeIntros');
+    Route::get('/{lang?}/received/page/{page}/quantity/{quantity}', 'MessagesController@getReceivedIntrosPaginate');
+    Route::get('/{lang?}/received/count', 'MessagesController@getCountReceivedIntros');
+  });
+
+  Route::group(['prefix' => 'contact-us'], function ($app) {
+    Route::post('/{lang?}', 'ContactUsController@sendMessage');
   });
 
 });

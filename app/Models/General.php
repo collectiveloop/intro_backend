@@ -2,21 +2,21 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
-class Rooms extends Model{
+class General extends Model{
 
     /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = 'rooms';
+    protected $table = 'general';
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['id_intro','id_user_1','id_user_1_leave','id_user_2','id_user_2_leave', 'id_user_3', 'id_user_3_leave', 'created_at','updated_at'];
+    protected $fillable = ['name', 'value', 'created_at','updated_at'];
 
     /**
      * The attributes excluded from the model's JSON form.

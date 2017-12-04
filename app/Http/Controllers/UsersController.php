@@ -55,7 +55,11 @@ class UsersController extends Controller
       $token;
       $inputs['external_id']= '';
       //verificamos que el usuario no sea de tipo external
-      $verification = Users::where('email',$inputs['email'])->orWhere('user_name',$inputs['email'])->first();
+      $verification = Users::where(function($query) use($inputs){
+        $query->where('email',$inputs['email'])
+        ->orWhere('user_name',$inputs['email']);
+      })
+      ->where('invited','=',0)->first();
       if($verification){
         if(isset($verification->external_id) && trim($verification->external_id)===''){
           try{
@@ -73,9 +77,8 @@ class UsersController extends Controller
                 return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.invalid_values'))]];
             }
           }catch (JWTException $e) {
-
             // Hubo un error
-            return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.session_impossible'))]];
+            return ['status'=>'error','data'=>['dss'=>$e,'message'=>htmlentities(\Lang::get('validation.messages.session_impossible'))]];
           }
         }else{
           if(isset($verification->platform) && trim($verification->platform)!=='')
@@ -95,36 +98,21 @@ class UsersController extends Controller
     }
 
     /**
-    * Función para retornar el token del usuario autenticado, si lo esta
-    * @return boolean, $token
-    * @memberof UsersController
-    */
-    private function getAuthenticationToken(){
-      $token = JWTAuth::getToken();
-      if(!$token)
-          return false;
-
-      return $token;
-    }
-
-    /**
-    * Función para retornar el token del usuario logueado
+    * Función para retornar el token
+    * @author Junior Milano <junior@sappitotech.com>
     * @return array
     * @memberof UsersController
     */
     public function getToken(){
-      $token = $this->getAuthenticationToken();
-      if(!$token)
-          return ['status'=>'error','data'=>['type'=>'session', 'message'=>htmlentities( \Lang::get('validation.messages.not_token') )]];
+      // obtenemos el token del usuario autenticado, si lo está
+      $old_token = JWTAuth::getToken();
+      $token='';
+      if(trim($old_token)!=='')
+        $token = JWTAuth::refresh($old_token);
+      if ($token)
+        return ['status'=>'success','data'=>['token'=>$token]];
 
-      try{
-          $token = JWTAuth::refresh($token);
-      }catch(TokenInvalidException $e){
-          return ['status'=>'error','data'=>['type'=>'session', 'message'=>htmlentities(\Lang::get('validation.messages.token_invalid'))]];
-      }
-
-      // retornamos el token si no hay errores
-      return ['status'=>'success-token','token'=>compact('token')];
+      return ['status'=>'error','data'=>['token'=>'']];
     }
 
     /**
@@ -139,11 +127,11 @@ class UsersController extends Controller
       if(isset($data_user['id']))
         Users::where('id','=',$data_user['id'])->update(['push_id'=>'']);
       // obtenemos el token del usuario autenticado, si lo está
-      $token = $this->getAuthenticationToken();
+      $token = JWTAuth::getToken();
       if ($token)
         JWTAuth::setToken($token)->invalidate();
 
-      return ['status'=>'success'];
+      return ['status'=>'success','dsfsdfs'=>$data_user['id']];
     }
 
     /**
@@ -277,18 +265,31 @@ class UsersController extends Controller
       }
 
       //validamos que el correo sea unico
-      $there_is_mail=Users::where('email',$inputs['email'])->first();
+      $there_is_mail=Users::where('email',$inputs['email'])->where('invited',0)->first();
       if($there_is_mail)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.email_exist'))]];
 
-      $there_is_user_name=Users::where('user_name',$inputs['user_name'])->first();
+      $there_is_user_name=Users::where('user_name',$inputs['user_name'])->where('invited',0)->first();
       if($there_is_user_name)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.username_exist'))]];
 
-      //verificamos si se solicitó resetar el password
+      $inputs['invited'] = 0;
       $inputs['raw_password']=$inputs['password'];
       $inputs['password']=\Hash::make($inputs['password']);
       $inputs['external_id']= '';
+      $found_user=Users::where(function($query) use($inputs){
+        $query->where('email',$inputs['email'])
+        ->orWhere('user_name',$inputs['user_name']);
+      })->where('invited',1)->first();
+      $id_user;
+      if(!$found_user){
+        $user = Users::create($inputs);
+        $id_user = $user->id;
+      }else{
+        $found_user->update($inputs);
+        $id_user = $found_user->id;
+      }
+
       $email_data = [];
       $email_data['raw_password']=$inputs['raw_password'];
       $email_data['email']=$inputs['email'];
@@ -313,11 +314,10 @@ class UsersController extends Controller
         $message->to($email_data['email']);
         $message->subject($email_data['register_send_email']);
       });
+      */
       if(count(\Mail::failures()) > 0)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
-*/
 
-      $user = Users::create($inputs);
       try{
         $login = ['email'=> $inputs['email'],'password'=> $inputs['raw_password']];
         //verificamos las credenciales y retornamos un error de no poderse autenticar
@@ -329,9 +329,9 @@ class UsersController extends Controller
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.register_session_impossible'))]];
       }
       if(isset($inputs['push_id']) && trim($inputs['push_id'])!=='')
-        Users::where('id','=',$user->id)->update(['push_id'=>$inputs['push_id']]);
+        Users::where('id','=',$id_user)->update(['push_id'=>$inputs['push_id']]);
 
-      return ['status'=>'success','data'=>['message'=>htmlentities(\Lang::get('validation.messages.success_register')),'user_id'=>$user->id,'token'=>$token]];
+      return ['status'=>'success','data'=>['message'=>htmlentities(\Lang::get('validation.messages.success_register')),'user_id'=>$id_user,'token'=>$token]];
     }
 
     /**
@@ -346,7 +346,7 @@ class UsersController extends Controller
 
       $inputs = Input::all();
       //validamos que el correo sea unico
-      $there_is_user=Users::where('email',$inputs['email'])->first(['id','platform','external_id']);
+      $there_is_user=Users::where('email',$inputs['email'])->where('invited',0)->first(['id','platform','external_id']);
       $token;
       $user_push_id = '';
       $platform =$there_is_user['platform'];
@@ -376,10 +376,19 @@ class UsersController extends Controller
           $errors = $validator->errors();
           return ['status'=>'error','data'=>['message'=>$errors->all()]];
         }
+        $inputs['invited'] = 0;
+        $id_user;
         $platform = $inputs['platform'];
-        $user = Users::create($inputs);
+        $found_user=Users::where('email',$inputs['email'])->where('invited',1)->first();
+        if(!$found_user){
+          $user = Users::create($inputs);
+          $id_user = $user->id;
+        }else{
+          $found_user->update($inputs);
+          $id_user = $found_user->id;
+        }
         $created = true;
-        $user_push_id = $user->id;
+        $user_push_id = $id_user;
       }
       if($platform===$inputs['platform']){
         try{
@@ -387,7 +396,7 @@ class UsersController extends Controller
           //verificamos las credenciales y retornamos un error de no poderse autenticar
           $token = JWTAuth::attempt($login);
           if (!$token)
-          return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.invalid_values'))]];
+            return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.invalid_values'))]];
         }catch (JWTException $e) {
           // Hubo un error
           return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.session_impossible'))]];
@@ -463,12 +472,71 @@ class UsersController extends Controller
     * @return array
     * @memberof UsersController
     */
-    public function redirectLink($token){
-      return view('redirect', ['url'=>'forgot-password/','token' =>$token]);
+    public function rememberPassword($token){
+      $lang = explode('-',\Request::server('HTTP_ACCEPT_LANGUAGE'))[0];
+      $data = ['email'=>'','password'=>'','confirm_password'=>'','error'=>false,'success'=>false,'token'=>$token];
+      if(trim($lang)!=='' )
+        \App::setLocale($lang);
+      $verifyToken = Users::where('remember_token',$token)->where('external_id','')->first();
+
+      if(!$verifyToken){
+        $data['error_token'] = true;
+        $data['error_message'] = \Lang::get('validation.messages.not_token_found');
+      }else{
+        $inputs = Input::all();
+        if(isset($inputs['hidden']) && trim($inputs['hidden'])!=='' && trim($inputs['hidden'])==='form'){
+          //'number_phones' => 'required|min:7',
+          $data['email'] = trim($inputs['email']);
+          $data['password'] = trim($inputs['password']);
+          $data['confirm_password'] = trim($inputs['confirm_password']);
+          $validator = \Validator::make($inputs, [
+            'email' => 'required|min:5',
+            'password' => 'required|min:8|max:15',
+            'confirm_password' => 'required|min:8|max:15'
+          ]);
+
+          if ($validator->fails()){
+              $data['error_form']=$validator->errors();
+              if(trim($data['error_form']->first('email'))!=='')
+                $data['error_email_class'] ='is-invalid';
+              else
+                $data['error_email_class'] ='is-valid';
+
+                if(trim($data['error_form']->first('password'))!=='')
+                  $data['error_password_class'] ='is-invalid';
+                else
+                  $data['error_password_class'] ='is-valid';
+
+                  if(trim($data['error_form']->first('confirm_password'))!=='')
+                    $data['error_confirm_password_class'] ='is-invalid';
+                  else
+                    $data['error_confirm_password_class'] ='is-valid';
+          }else{
+            if(trim($inputs['password'])!==trim($inputs['confirm_password'])){
+              $data['error_match'] =true;
+            }else{
+              $user = Users::where('remember_token',$token)->where('external_id','')->where(function ($query) use ($inputs) {
+                $query->where('email',$inputs['email'])->orWhere('user_name',$inputs['email']);
+              })->first();
+
+              if(!$user){
+                $data['error_message'] = htmlentities(\Lang::get('validation.messages.user_not_found'));
+              }else{
+                $user->update(['password'=>\Hash::make($inputs['password']),'remember_token'=>'']);
+                $data['success'] = true;
+              }
+            }
+          }
+
+        }
+
+      }
+
+      return view('reset_form', $data);
     }
 
     /**
-    * Función para actualizr la contraseña por solicitud del usuario
+    * Función para actualizar la contraseña por solicitud del usuario
     * @author Junior Milano <junior@sappitotech.com>
     * @return array
     * @memberof UsersController

@@ -81,11 +81,12 @@ class Handler extends ExceptionHandler
         }elseif ($e instanceof TokenExpiredException){
             $errorFounded =  ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.token_expired'))]];
         }
+    }
         */
         if ($e instanceof TokenInvalidException){
-            $errorFounded =  ['status'=>'error','data'=>['type'=>'session','message'=>htmlentities(\Lang::get('validation.messages.token_invalid'))]];
+          $errorFounded =  ['status'=>'error','data'=>['type'=>'session','message'=>htmlentities(\Lang::get('validation.messages.token_invalid'))]];
         }elseif ($e instanceof TokenExpiredException){
-            $errorFounded =  ['status'=>'error','data'=>['type'=>'session','message'=>htmlentities(\Lang::get('validation.messages.token_expired'))]];
+          $errorFounded =  ['status'=>'error','data'=>['type'=>'session','message'=>htmlentities(\Lang::get('validation.messages.token_expired'))]];
         }
         if($errorFounded)
             return response()->json($errorFounded, 500,['content-type'=>'application/json; charset=utf-8']);

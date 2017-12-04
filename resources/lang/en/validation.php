@@ -180,14 +180,20 @@ return [
           'required'=>' The reason is required',
           'min'=>' The reason must be at least :min characters.'
         ],
+        'message' => [
+          'required'=>' The message is required',
+          'min'=>' The message must be at least :min characters.'
+        ]
     ],
     'messages' => [
       'not_direction' => 'Direction not found',
       'not_direction_ajax' => 'Direction not found in the AJAX request',
-      'invalid_values' =>'Invalid values for Login',
+      'not_session' =>'Session not found',
+      'invalid_values' =>'Username or password are incorrect',
       'session_impossible' =>'It\'s not posible log in',
       'register_session_impossible' =>'It\'s not posible register now',
       'not_token' => 'There is not token',
+      'not_token_found' => 'Token not found',
       'token_expired' => 'Token expired',
       'token_invalid' => 'Invalid token',
       'not_type_user' => 'There is not type user',
@@ -210,10 +216,11 @@ return [
       'regards_email' => 'Regards',
       'user_email' => 'User',
       'email_label' => 'Email',
+      'name_label' => 'Name',
       'password_email' => 'Password',
       'password_not_match' => 'Old password not match with your current password',
       'number_phones_email' => 'Number Phones',
-      'user_not_found' => 'The user is not been found',
+      'user_not_found' => 'User not found',
       'success_update' => 'Successful update',
       'success_forgot_password' => 'The email reset password has been sent',
       'forgot_password_sent' => 'The email reset password has been sent previously',
@@ -234,6 +241,7 @@ return [
       'accept_invitation' => 'Accept Invitation',
       'invalid_user' =>'User invalid',
       'user_1_not_exist' =>'The friend 1 does not exist',
+      'user_not_exist' =>'The user does not exist',
       'user_2_not_exist' =>'The friend 2 does not exist',
       'intros_exists' =>'The contacts have been introduced previously',
       'invitation_email' => 'Contact Invitation in Intro App',
@@ -242,8 +250,17 @@ return [
       'both_contacts' =>' Both contacts have been introduced previously.',
       'contact_not_found' => 'Contact not found',
       'friend_found' => 'The Contact is linked to an intros, it can not be deleted',
-      'not_access_chat' => 'Usted no tiene permisos para acceder a este chat',
-      'not_room' => 'El chat no fue encontrado'
+      'not_access_chat' => 'Yo do not have permission to access this chat',
+      'not_room' => 'Room not found',
+      'intro_abandoned' => 'Intro abandoned',
+      'contact_us_email_init' => 'The user',
+      'contact_us_email_end' => 'has sent the following message:',
+      'subject_email_contact_us' => 'INTRO PRO: message received from',
+      'success_contact_us' => 'Email sent succesfully',
+      'email_no_exist_contact_us' => 'The email to send message does not exist in Intro App',
+      'must_complete_fields' => 'You must complete the fields for continue',
+      'success_reset_password' =>'Password has been changed successfully',
+      'confirm_password_match_error'=> 'The password and the confirmation password do not match'
     ],
 
     /*

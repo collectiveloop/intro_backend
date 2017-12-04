@@ -91,54 +91,43 @@ class IntrosController extends Controller
       })
       ->count();
 
-      $received = \App\Models\Users::join('users_friends as owner_user_friend','owner_user_friend.id_user_friend','=','users.id')
-      ->join('intros',
-      function($join){
-        $join->on('owner_user_friend.id', '=','intros.id_friend_1');
-        $join->orOn('owner_user_friend.id', '=','intros.id_friend_2');
+      $received = Intros::join('users_friends as owner_friend',function($join) use ($data_user){
+        $join->on(function($join2){
+            $join2->on('owner_friend.id','=','intros.id_friend_1')
+            ->orOn('owner_friend.id','=','intros.id_friend_2');
+        })
+        ->where('owner_friend.id_user_friend', '=', $data_user['id']);
       })
-      ->join('users_friends as user_friend_1',
-      function($join){
-        $join->on('user_friend_1.id','=','intros.id_friend_1');
-        $join->orOn('user_friend_1.id_user', '=','intros.id_user');
-      })
-      ->join('users as friend_1','friend_1.id','=','user_friend_1.id_user_friend')
-      ->join('users_friends as user_friend_2',
-      function($join){
-        $join->on('user_friend_2.id','=','intros.id_friend_2');
-        $join->orOn('user_friend_2.id_user', '=','intros.id_user');
-      })
-      ->join('users as friend_2','friend_2.id','=','user_friend_2.id_user_friend')
-      ->where('users.id', '=', $data_user['id'])
+      ->join('users_friends as user_friend_1','user_friend_1.id','=','intros.id_friend_1')
+      ->join('users as user_1','user_1.id','=','user_friend_1.id_user_friend')
+      ->join('users_friends as user_friend_2','user_friend_2.id','=','intros.id_friend_2')
+      ->join('users as user_2','user_2.id','=','user_friend_2.id_user_friend')
       ->orderBy('intros.created_at', 'desc')
       ->orderBy('intros.updated_at', 'desc')
       ->first([
         'intros.id',
         'intros.id_friend_1',
-        'friend_1.id as id_user_1',
-        'friend_1.first_name as friend_1_first_name',
-        'friend_1.last_name as friend_1_last_name',
-        'friend_1.image_profile as friend_1_image_profile',
         'intros.id_friend_2',
-        'friend_2.id as id_user_2',
-        'friend_2.first_name as friend_2_first_name',
-        'friend_2.last_name as friend_2_last_name',
-        'friend_2.image_profile as friend_2_image_profile',
-        'intros.reason'
+        'user_1.id as id_user_1',
+        'user_2.id as id_user_2',
+        'intros.reason',
+        'user_1.first_name as friend_1_first_name',
+        'user_1.last_name as friend_1_last_name',
+        'user_1.image_profile as friend_1_image_profile',
+        'user_2.first_name as friend_2_first_name',
+        'user_2.last_name as friend_2_last_name',
+        'user_2.image_profile as friend_2_image_profile'
       ]);
 
-      $count_received = \App\Models\Users::join('users_friends','users_friends.id_user_friend','=','users.id')
-      ->join('intros',
-      function($join){
-        $join->on('users_friends.id', '=','intros.id_friend_1');
-        $join->orOn('users_friends.id', '=','intros.id_friend_2');
-      })
-      ->where('users_friends.status', '=', 1)
-      ->where('users.id', '=', $data_user['id'])
-      ->count(['intros.id']);
+      $count_received = \App\Models\Intros::join('users_friends',function($join) use ($data_user){
+        $join->on(function($join2){
+            $join2->on('users_friends.id','=','intros.id_friend_1')
+            ->orOn('users_friends.id','=','intros.id_friend_2');
+        })
+        ->where('users_friends.id_user_friend', '=', $data_user['id']);
+      })->count(['intros.id']);
 
       $result=[];
-
       $result['count_made'] = $count_made;
       $result['count_received'] = $count_received;
       if($made)
@@ -151,13 +140,14 @@ class IntrosController extends Controller
           'reason' =>$received['reason']
         ];
         //retorno los datos de la persona que no es el usuario que se está consultando, porque es con quien lo están presentando
-        if($data_user['id']===$received['id_user_1']){
-          $result['received']['id_user'] = $received['id_friend_2'];
+        if($data_user['id']==$received['id_user_1']){
+
+          $result['received']['id_user'] = $received['id_user_2'];
           $result['received']['friend_image_profile'] = $received['friend_2_image_profile'];
           $result['received']['friend_first_name'] = $received['friend_2_first_name'];
           $result['received']['friend_last_name'] = $received['friend_2_last_name'];
         }else{
-          $result['received']['id_user'] = $received['id_friend_1'];
+          $result['received']['id_user'] = $received['id_user_1'];
           $result['received']['friend_image_profile'] = $received['friend_1_image_profile'];
           $result['received']['friend_first_name'] = $received['friend_1_first_name'];
           $result['received']['friend_last_name'] = $received['friend_1_last_name'];
@@ -304,8 +294,7 @@ class IntrosController extends Controller
     * @memberof ContactsController
     */
     public function redirectLink(){
-      $split = explode('/',url('/'));
-      $domain = $split[0];
+      $domain = str_replace('http://','',str_replace('/api/public','',url('/')));
 
       return view('redirect', ['url'=>$domain.'/intros','token' =>'']);
     }

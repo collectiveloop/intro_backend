@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Input;
 use JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Validator;
-
 /**
 *
 * @version 1.0
@@ -235,6 +234,7 @@ class ContactsController extends Controller
           //$query_join->where('users.first_name','like','%'.$find.'%')->orWhere('users.last_name','like','%'.$find.'%')->orWhere('users.email','like','%'.$find.'%')->orWhere('users.user_name','like','%'.$find.'%');
           $query_join->whereRaw($full_search);
         })
+        ->where('users.invited','=',0)
         ->whereNull('users_friends.id')
         ->whereNull('cp1.id')
         ->whereNull('cp2.id')
@@ -510,7 +510,7 @@ class ContactsController extends Controller
       if(trim($lang)!=='')
         \App::setLocale($lang);
       // obtenemos la información del usuario autenticado
-      $contact = \App\Models\Users::where('email',$email)->where('id','!=',$data_user['id'])
+      $contact = \App\Models\Users::where('email',$email)->where('id','!=',$data_user['id'])->where('invited',0)
       ->first([
         'users.id',
         'users.first_name',
@@ -531,7 +531,7 @@ class ContactsController extends Controller
     * @return array
     * @memberof ContactsController
     */
-    public function addContact($lang){
+    public function addContact($lang,$invited=false){
       $data_user = $this->getDataUser();
       if(!isset($data_user['id']))
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
@@ -551,10 +551,16 @@ class ContactsController extends Controller
         return ['status'=>'error','data'=>['message'=>$errors->all()]];
       }
 
-      // validamso que el nuevo contacto no sea el mismo usuario
+      // validamos que el nuevo contacto no sea el mismo usuario
       $user = \App\Models\Users::where('id','=',$data_user['id'])->where('email','=',trim($inputs['email']))->first();
       if($user)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.invalid_user'))]];
+
+      if($invited===false || $invited==='false'){
+        $user_invited = \App\Models\Users::where('email','=',trim($inputs['email']))->where('invited','=',1)->first();
+        if($user_invited)
+          return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.invalid_user'))]];
+      }
 
       $user_friend = UsersFriends::join('users', function($join) use ($inputs){
         $join->where('users.email','=',trim($inputs['email']))
@@ -569,10 +575,48 @@ class ContactsController extends Controller
         $query->where('status','=',0)->orWhere('status','=',1);
       })->first();
       if($contact_pending)
-        return ['status'=>'error','data'=>['fff'=>$data_user['id'],'message'=>htmlentities(\Lang::get('validation.messages.is_contact_pending'))]];
+        return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.is_contact_pending'))]];
+      $id_user;
+      $name;
+      $user;
+      $owner_user_friend;
+      if($invited!==false && $invited!=='false'){
+        //es especial, un invitado lo creamos como usuario para luego proseguir con el proceso
+        $is_user_friend = \App\Models\Users::leftJoin('users_friends',function($query) use($data_user){
+          $query->on('users.id','=','users_friends.id_user_friend')
+          ->where('users_friends.id_user','=',$data_user['id']);
+        })->where('users.email','=',trim($inputs['email']))->first(['users_friends.id as id_user_friend','users.id as id_user','users.invited']);
+        $name = explode(' ',$inputs['full_name']);
+        $can_user_friend = false;
+        if(!$is_user_friend || !isset($is_user_friend->id_user) || trim($is_user_friend->id_user)===''){
+          $created_user = [
+            'first_name'=>'',
+            'last_name'=>'',
+            'email'=>$inputs['email'],
+            'invited'=>1
+          ];
+          $created_user['first_name'] = trim($name[0]);
+          if(isset($name[1]))
+          $created_user['last_name'] = trim($name[1]);
 
-      $contact_pending = ContactsPending::create(
-      [
+          $user = \App\Models\Users::create($created_user);
+          $id_user = $user->id;
+          $can_user_friend = true;
+        }else{
+          $id_user = $is_user_friend->id_user;
+          if($is_user_friend->invited==1)
+            $can_user_friend = true;
+        }
+        if((!isset($is_user_friend->id_user_friend) || trim($is_user_friend->id_user_friend)==='') &&  $can_user_friend ){
+          $owner = UsersFriends::create(['id_user'=>$data_user['id'], 'id_user_friend'=>$id_user,'status'=>1]);
+          UsersFriends::create(['id_user'=>$id_user, 'id_user_friend'=>$data_user['id'],'status'=>1]);
+          $owner_user_friend = $owner->id;
+        }else{
+          $owner_user_friend = $is_user_friend->id_user_friend;
+        }
+      }
+
+      $contact_pending = ContactsPending::create([
         'id_user'=>$data_user['id'],
         'full_name'=>trim($inputs['full_name']),
         'email'=>trim($inputs['email']),
@@ -590,17 +634,33 @@ class ContactsController extends Controller
         'regards_email'=>htmlentities(\Lang::get('validation.messages.regards_email')),
         'invitation_send_email'=>htmlentities(\Lang::get('validation.messages.invitation_send_email'))
       ];
-
+/*
       \Mail::send('emails.add_contact', $email_data, function($message) use ($email_data) {
         $message->to($email_data['email']);
         $message->subject($email_data['invitation_send_email']);
       });
 
+
       if(count(\Mail::failures()) > 0)
         return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.fail_send_email'))]];
+*/
+      $data = ['message'=>htmlentities(\Lang::get('validation.messages.success_register'))];
+      if($invited!==false && $invited!=='false'){
+        $data['data'] = [
+          'id_user'=>$id_user,
+          'id_user_friend'=>$owner_user_friend,
+          'first_name'=> trim($name[0]),
+          'last_name'=> '',
+          'email'=>trim($inputs['email']),
+          'status'=>0,
+          'invited'=>1
+        ];
 
+        if(isset($name[1]))
+          $data['data']['last_name'] = trim($name[1]);
+      }
 
-      return ['status'=>'success','data'=>['message'=>htmlentities(\Lang::get('validation.messages.success_register'))]];
+      return ['status'=>'success','data'=>$data];
     }
 
     /**
@@ -610,8 +670,7 @@ class ContactsController extends Controller
     * @memberof ContactsController
     */
     public function redirectLink(){
-      $split = explode('/',url('/'));
-      $domain = $split[0];
+      $domain = str_replace('http://','',str_replace('/api/public','',url('/')));
 
       return view('redirect', ['url'=>$domain.'/invitation-contact','token' =>'']);
     }

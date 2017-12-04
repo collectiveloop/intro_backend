@@ -168,7 +168,7 @@ class ListIntrosController extends Controller
     if(!isset($data_user['id']))
       return ['status'=>'error','data'=>['message'=>htmlentities(\Lang::get('validation.messages.user_not_found'))]];
 
-    $made = Intros::join('users_friends as owner_friend',function($join) use ($data_user){
+    $received = Intros::join('users_friends as owner_friend',function($join) use ($data_user){
       $join->on(function($join2){
           $join2->on('owner_friend.id','=','intros.id_friend_1')
           ->orOn('owner_friend.id','=','intros.id_friend_2');
@@ -205,7 +205,7 @@ class ListIntrosController extends Controller
       'user.user_name as user_user_name'
     ]);
 
-    return ['status'=>'success','data'=>['id_user'=>$data_user['id'],'intros' => $made]];
+    return ['status'=>'success','data'=>['id_user'=>$data_user['id'],'intros' => $received]];
   }
 
   /**

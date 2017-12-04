@@ -180,13 +180,19 @@ return [
           'required'=>' La razón de la intro es requerida',
           'min'=>' La razón de la intro debe tener al menos :min caracteres'
         ],
+        'message' => [
+          'required'=>' El mensaje es requerido',
+          'min'=>' El mensaje debe tener al menos :min caracteres'
+        ]
     ],
     'messages' => [
       'not_direction' => 'La dirección no fue encontrada',
       'not_direction_ajax' => 'La dirección no fue encontrada en la solicitud AJAX',
-      'invalid_values' =>'Datos inválidos para iniciar sesión',
+      'not_session' =>'Session no encontrada',
+      'invalid_values' =>'El usuario o la contraseña es incorrecto',
       'session_impossible' =>'No se pudo iniciar sesión',
       'register_session_impossible' =>'No es posible registrarse en estos momentos',
+      'not_token_found' => 'No se ha encontrado el token',
       'not_token' => 'No hay token para retornar',
       'token_expired' => 'Token vencido',
       'token_invalid' => 'Token inválido',
@@ -209,6 +215,7 @@ return [
       'your_information_email' => 'Estos son sus datos',
       'regards_email' => 'Saludos',
       'user_email' => 'Usuario',
+      'name_label' => 'Nombre',
       'email_label' => 'Correo',
       'password_email' => 'Clave',
       'password_not_match' => 'La clave indicada no coincide con su clave actual',
@@ -234,6 +241,7 @@ return [
       'accept_invitation' => 'Acceptar Invitación',
       'invalid_user' =>'Usuario inválido',
       'user_1_not_exist' =>'El contacto 1 no existe',
+      'user_not_exist' =>'El usuario no existe',
       'user_2_not_exist' =>'El contacto 2 no existe',
       'intros_exists' =>'Los contactos han sido presentados anteriormente',
       'invitation_email' => 'Invitación de contacto in Intro App',
@@ -242,8 +250,17 @@ return [
       'both_contacts' =>' Los contactos seleccionados ya han sido introducidos previamente.',
       'contact_not_found' =>' Contacto no encontrado',
       'friend_found' => 'El contacto está vinculado a una introducción, no se puede eliminar',
-      'not_access_chat' => 'Yo do not have permission to access this chat',
-      'not_room' => 'Room not found'
+      'not_access_chat' => 'Usted no tiene permisos para acceder a este chat',
+      'not_room' => 'El chat no fue encontrado',
+      'intro_abandoned' => 'Intro abandonada',
+      'contact_us_email_init' => 'El usuario',
+      'contact_us_email_end' => 'ha enviado la siguiente el siguiente mensaje:',
+      'subject_email_contact_us' => 'INTRO PRO: Mensaje enviado de',
+      'success_contact_us' => 'Mensaje enviado de forma exitosa',
+      'email_no_exist_contact_us' => 'El correo para enviar los mensajes no existe en Intro App',
+      'must_complete_fields' => 'Debes completar los campos para poder continuar',
+      'success_reset_password' =>'El password ha sido cambiado satisfactoriamente',
+      'confirm_password_match_error'=> 'La clave y la confirmación no coinciden.'
     ],
     /*
     |--------------------------------------------------------------------------
